@@ -1,15 +1,18 @@
 ﻿namespace sps.Domain.Model.Entities
 {
-    
-   public class OpkvalSupervision
-{
-    public int Id { get; set; }
-    public string Status { get; set; }
-    public decimal HoursSpentSupervision { get; set; }
-    public decimal HoursSpentOpkvalificering { get; set; }
-    public decimal HoursSought { get; set; }
-    
-    // Navigation
-    public ICollection<SpsaCase> SpsaCases { get; set; }
-}
+    public class OpkvalSupervision
+    {
+        public Guid Id { get; set; }
+        public string Status { get; set; } // Godkendt, Studerende skal give samtykke, Afventer STUK, Afslag STUK, Anulleret STUK
+
+        public int HoursSpentSupervision { get; set; }
+        public int HoursSpentOpkvalificering { get; set; }
+        public int HoursSought { get; set; }
+
+        //TODO:
+        // maybe make sure that HoursSpentSupervision + HoursSpentOpkvalificering <= HoursSought with business logic
+
+        // Navigation
+        public ICollection<SpsaCase> SpsaCases { get; set; }
+    }
 }

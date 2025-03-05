@@ -62,6 +62,12 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
+*.deps.json
+*.dll
+*.exe
+*.pdb
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
 
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
@@ -361,5 +367,16 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# API settings - keep these out of source control
 /sps.Api/appsettings.json
 /sps.Api/appsettings.Development.json
+
+# TestResults
+/TestResults/
+**/TestResults/
+**/*.trx
+
+# VS Code files
+.vscode/
+*.code-workspace

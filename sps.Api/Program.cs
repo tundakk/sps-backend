@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using sps.API;
 using sps.BLL;
+using sps.BLL.Services.Implementations;
+using sps.Domain.Model.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +11,7 @@ builder.Services.AddControllers();
 
 // Add Business Logic Layer services, including DbContext, Identity, Repositories, and other services.
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
+builder.Services.AddScoped<IEncryptionService, AESEncryptionService>();
 
 // Add semantic kernel
 
@@ -116,6 +120,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 // If you have identity endpoints, make sure to map them
-app.MapIdentityApi<AppUser>();
+app.MapIdentityApi<IdentityUser<Guid>>();
 
 app.Run();

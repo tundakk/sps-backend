@@ -1,101 +1,127 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using sib_api_v3_sdk.Api;
-using sib_api_v3_sdk.Client;
-using sib_api_v3_sdk.Model;
-
-/// <summary>
-/// Class responsible for sending emails using Brevo (SendinBlue) API.
-/// </summary>
-public class BrevoEmailSender : IEmailSender<AppUser>
+﻿namespace sps.BLL.Email
 {
-    private readonly IConfiguration _configuration;
-    private readonly TransactionalEmailsApi _emailApi;
-    private readonly ILogger<BrevoEmailSender> _logger;
+    using Microsoft.AspNetCore.Identity;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
+    using sib_api_v3_sdk.Api;
+    using sib_api_v3_sdk.Client;
+    using sib_api_v3_sdk.Model;
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BrevoEmailSender"/> class.
+    /// Class responsible for sending emails using Brevo (SendinBlue) API.
     /// </summary>
-    /// <param name="configuration">The configuration instance to retrieve settings.</param>
-    /// <param name="logger">The logger instance for logging information and errors.</param>
-    public BrevoEmailSender(IConfiguration configuration, ILogger<BrevoEmailSender> logger)
+    public class BrevoEmailSender : IEmailSender<IdentityUser<Guid>>
     {
-        _configuration = configuration;
-        _logger = logger;
+        private readonly IConfiguration _configuration;
+        private readonly TransactionalEmailsApi _emailApi;
+        private readonly ILogger<BrevoEmailSender> _logger;
 
-        // Retrieve Brevo API settings from appsettings
-        var brevoApiKey = _configuration["BrevoApi:ApiKey"];
-        var senderName = _configuration["BrevoApi:SenderName"];
-        var senderEmail = _configuration["BrevoApi:SenderEmail"];
-
-        // Ensure the API key and sender details are properly configured
-        if (string.IsNullOrEmpty(brevoApiKey))
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BrevoEmailSender"/> class.
+        /// </summary>
+        /// <param name="configuration">The configuration instance to retrieve settings.</param>
+        /// <param name="logger">The logger instance for logging information and errors.</param>
+        public BrevoEmailSender(IConfiguration configuration, ILogger<BrevoEmailSender> logger)
         {
-            throw new InvalidOperationException("Brevo API key is not configured.");
+            _configuration = configuration;
+            _logger = logger;
+
+            // Retrieve Brevo API settings from appsettings
+            var brevoApiKey = _configuration["BrevoApi:ApiKey"];
+            var senderName = _configuration["BrevoApi:SenderName"];
+            var senderEmail = _configuration["BrevoApi:SenderEmail"];
+
+            // Ensure the API key and sender details are properly configured
+            if (string.IsNullOrEmpty(brevoApiKey))
+            {
+                throw new InvalidOperationException("Brevo API key is not configured.");
+            }
+
+            if (string.IsNullOrEmpty(senderName) || string.IsNullOrEmpty(senderEmail))
+            {
+                throw new InvalidOperationException("Sender name or email is not configured.");
+            }
+
+            // Configure API client with API key
+            Configuration.Default.ApiKey.Add("api-key", brevoApiKey);
+            _emailApi = new TransactionalEmailsApi();
         }
 
-        if (string.IsNullOrEmpty(senderName) || string.IsNullOrEmpty(senderEmail))
+        /// <summary>
+        /// Sends a confirmation link to the specified email.
+        /// </summary>
+        /// <param name="user">The user to whom the email is sent.</param>
+        /// <param name="email">The email address to send the confirmation link to.</param>
+        /// <param name="confirmationLink">The confirmation link to be sent.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task SendConfirmationLinkAsync(IdentityUser<Guid> user, string email, string confirmationLink)
         {
-            throw new InvalidOperationException("Sender name or email is not configured.");
+            var subject = "Please confirm your email";
+            var message = $"<p>Hello {user.UserName},</p><p>Please confirm your email by clicking <a href=\"{confirmationLink}\">this link</a>.</p>";
+
+            await SendEmailAsync(email, subject, message);
         }
 
-        // Configure API client with API key
-        Configuration.
-        Default.ApiKey.Add("api-key", brevoApiKey);
-        _emailApi = new TransactionalEmailsApi();
-    }
-
-    async System.Threading.Tasks.Task IEmailSender<AppUser>.SendConfirmationLinkAsync(AppUser user, string email, string confirmationLink)
-    {
-        var subject = "Please confirm your email";
-        var message = $"<p>Hello {user.UserName},</p><p>Please confirm your email by clicking <a href=\"{confirmationLink}\">this link</a>.</p>";
-
-        await SendEmailAsync(email, subject, message);
-    }
-
-    async System.Threading.Tasks.Task IEmailSender<AppUser>.SendPasswordResetLinkAsync(AppUser user, string email, string resetLink)
-    {
-        var subject = "Password Reset Request";
-        var message = $"<p>Hello {user.UserName},</p><p>You can reset your password by clicking <a href=\"{resetLink}\">this link</a>.</p>";
-
-        await SendEmailAsync(email, subject, message);
-    }
-
-    async System.Threading.Tasks.Task IEmailSender<AppUser>.SendPasswordResetCodeAsync(AppUser user, string email, string resetCode)
-    {
-        var subject = "Your Password Reset Code";
-        var message = $"<p>Hello {user.UserName},</p><p>Your password reset code is: {resetCode}</p>";
-
-        await SendEmailAsync(email, subject, message);
-    }
-
-    // Helper method to send the email using Brevo (SendinBlue)
-    private async System.Threading.Tasks.Task SendEmailAsync(string toEmail, string subject, string htmlContent)
-    {
-        var sendSmtpEmail = new SendSmtpEmail
+        /// <summary>
+        /// Sends a password reset link to the specified email.
+        /// </summary>
+        /// <param name="user">The user to whom the email is sent.</param>
+        /// <param name="email">The email address to send the reset link to.</param>
+        /// <param name="resetLink">The password reset link to be sent.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task SendPasswordResetLinkAsync(IdentityUser<Guid> user, string email, string resetLink)
         {
-            To = new List<SendSmtpEmailTo> { new SendSmtpEmailTo(toEmail) },
-            Subject = subject,
-            HtmlContent = htmlContent,
-            Sender = new SendSmtpEmailSender(_configuration["BrevoApi:SenderName"], _configuration["BrevoApi:SenderEmail"]) // Customize sender details
-        };
+            var subject = "Password Reset Request";
+            var message = $"<p>Hello {user.UserName},</p><p>You can reset your password by clicking <a href=\"{resetLink}\">this link</a>.</p>";
 
-        try
-        {
-            // Send email using Brevo's API
-            var response = await _emailApi.SendTransacEmailAsync(sendSmtpEmail);
-            _logger.LogInformation($"Email sent successfully: {response.MessageId}");
+            await SendEmailAsync(email, subject, message);
         }
-        catch (ApiException ex)
+
+        /// <summary>
+        /// Sends a password reset code to the specified email.
+        /// </summary>
+        /// <param name="user">The user to whom the email is sent.</param>
+        /// <param name="email">The email address to send the reset code to.</param>
+        /// <param name="resetCode">The password reset code to be sent.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task SendPasswordResetCodeAsync(IdentityUser<Guid> user, string email, string resetCode)
         {
-            // Log the exception if the email sending fails
-            _logger.LogError($"Error sending email to {toEmail}: {ex.Message}");
+            var subject = "Your Password Reset Code";
+            var message = $"<p>Hello {user.UserName},</p><p>Your password reset code is: {resetCode}</p>";
+
+            await SendEmailAsync(email, subject, message);
         }
-        catch (Exception ex)
+
+        // Helper method to send the email using Brevo (SendinBlue)
+        private async Task SendEmailAsync(string toEmail, string subject, string htmlContent)
         {
-            // Catch other exceptions
-            _logger.LogError($"Unexpected error sending email to {toEmail}: {ex.Message}");
+            var sendSmtpEmail = new SendSmtpEmail
+            {
+                To = new List<SendSmtpEmailTo> { new SendSmtpEmailTo(toEmail) },
+                Subject = subject,
+                HtmlContent = htmlContent,
+                Sender = new SendSmtpEmailSender(_configuration["BrevoApi:SenderName"], _configuration["BrevoApi:SenderEmail"]) // Customize sender details
+            };
+
+            try
+            {
+                // Send email using Brevo's API
+                var response = await _emailApi.SendTransacEmailAsync(sendSmtpEmail);
+                _logger.LogInformation($"Email sent successfully: {response.MessageId}");
+            }
+            catch (ApiException ex)
+            {
+                // Log the exception if the email sending fails
+                _logger.LogError($"Error sending email to {toEmail}: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Catch other exceptions
+                _logger.LogError($"Unexpected error sending email to {toEmail}: {ex.Message}");
+            }
         }
     }
 }

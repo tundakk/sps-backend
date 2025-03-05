@@ -1,13 +1,13 @@
-namespace sps.DAL.Repos
-{
-    using sps.DAL.DataModel;
-    using sps.DAL.Entities;
-    using sps.DAL.Repos.Base;
-    using sps.DAL.Repos.Interfaces;
+using sps.DAL.DataModel;
+using sps.DAL.Repos.Base;
+using sps.DAL.Repos.Interfaces;
+using sps.Domain.Model.Entities;
 
+namespace sps.DAL.Repos.Implementations
+{
     public class StudentPaymentRepo : BaseRepo<StudentPayment>, IStudentPaymentRepo
     {
-        public StudentPaymentRepo(DataContext dataContext) : base(dataContext)
+        public StudentPaymentRepo(SpsDbContext dataContext) : base(dataContext)
         {
         }
     }

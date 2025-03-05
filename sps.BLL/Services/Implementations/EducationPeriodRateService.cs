@@ -1,18 +1,16 @@
-namespace sps.BLL.Infrastructure.Services.Implementations
+namespace sps.BLL.Services.Implementations
 {
-    using sps.BLL.Infrastructure.Interfaces;
-    using sps.DAL.Entities;
-    using sps.DAL.Repos.Interfaces;
-    using sps.Domain.Model.Models;
-    using sps.Domain.Model.Responses;
-    using Mapster;
     using Microsoft.Extensions.Logging;
-    using System.Collections.Generic;
+    using sps.BLL.Services.Base;
+    using sps.BLL.Services.Interfaces;
+    using sps.DAL.Repos.Interfaces;
+    using sps.Domain.Model.Entities;
+    using sps.Domain.Model.Models;
 
     public class EducationPeriodRateService : BaseService<EducationPeriodRateModel, EducationPeriodRate, IEducationPeriodRateRepo>, IEducationPeriodRateService
     {
         public EducationPeriodRateService(IEducationPeriodRateRepo educationPeriodRateRepo, ILogger<EducationPeriodRateService> logger)
-            : base(educationPeriodRate, logger)
+            : base(educationPeriodRateRepo, logger)
         {
         }
 

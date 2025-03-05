@@ -2,15 +2,15 @@
 {
     using System;
 
-   public class Period
-{
-    // E.g. "E24","F25" etc.
-    public int Id { get; set; }
-    public string Name { get; set; }
-    
-    // Navigation
-    public ICollection<EducationPeriodRate> EducationPeriodRates { get; set; }
-    public ICollection<SpsaCase> SpsaCases { get; set; }
-    public ICollection<Student> Students { get; set; }
-}
+    public class Period
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } // E.g. "E24","F25" etc. "E" for Efterår, "F" for Forår
+
+        // Navigation
+        public ICollection<EducationPeriodRate> EducationPeriodRates { get; set; }
+
+        public ICollection<SpsaCase> SpsaCases { get; set; }
+        public ICollection<Student> Students { get; set; }
+    }
 }

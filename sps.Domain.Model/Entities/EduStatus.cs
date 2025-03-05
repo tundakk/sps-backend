@@ -1,12 +1,11 @@
 ﻿namespace sps.Domain.Model.Entities
 {
-    
-   public class EduStatus
-{
-    public int Id { get; set; }
-    public string Status { get; set; }
-    
-    // Navigation
-    public ICollection<SpsaCase> SpsaCases { get; set; }
-}
+    public class EduStatus
+    {
+        public Guid Id { get; set; }
+        public string Status { get; set; } // Afbrudt,Aktiv, Gennemført, Inaktiv-SPS, Orlov, Syg
+
+        // Navigation
+        public ICollection<SpsaCase> SpsaCases { get; set; }
+    }
 }
