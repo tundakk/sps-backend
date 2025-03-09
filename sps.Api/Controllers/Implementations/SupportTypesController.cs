@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
-using sps.Api.Controllers.Base;
+using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
+using sps.Domain.Model.Dtos.SupportType;
 using sps.Domain.Model.Models;
+using Mapster;
+using sps.Domain.Model.Responses;
 
 namespace sps.API.Controllers.Implementations
 {
     /// <summary>
-    /// SupportTypesController
+    /// Controller for managing support types
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -17,7 +20,7 @@ namespace sps.API.Controllers.Implementations
         /// <summary>
         /// Initializes a new instance of the <see cref="SupportTypesController"/> class.
         /// </summary>
-        /// <param name="supportTypeService">The SupportType service.</param>
+        /// <param name="supportTypeService">The support type service.</param>
         /// <param name="logger">The logger.</param>
         public SupportTypesController(ISupportTypeService supportTypeService, ILogger<SupportTypesController> logger)
             : base(logger)
@@ -25,18 +28,17 @@ namespace sps.API.Controllers.Implementations
             _supportTypeService = supportTypeService;
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets all support types with basic information.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
             try
             {
                 var response = await _supportTypeService.GetAllAsync();
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<SupportTypeDto>>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -44,18 +46,18 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets detailed information about a specific support type.
+        /// </summary>
+        /// <param name="id">The ID of the support type to retrieve.</param>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             try
             {
                 var response = await _supportTypeService.GetByIdAsync(id);
-                if (!response.Success)
-                {
-                    return NotFound(response.Message); // Use NotFound for invalid IDs
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<SupportTypeDetailDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -63,22 +65,20 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Creates a new support type.
+        /// </summary>
+        /// <param name="createDto">The support type details.</param>
         [HttpPost]
-        public async Task<IActionResult> InsertAsync([FromBody] SupportTypeModel supportTypeModel)
+        public async Task<IActionResult> CreateAsync([FromBody] CreateSupportTypeDto createDto)
         {
             try
             {
-                var response = await _supportTypeService.InsertAsync(supportTypeModel);
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                if (response.Data == null)
-                {
-                    return BadRequest("Failed to create the SupportType");
-                }
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Data.Id }, response.Data);
+                var model = createDto.Adapt<SupportTypeModel>();
+                var response = await _supportTypeService.InsertAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<SupportTypeDto>>();
+                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
+                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -86,19 +86,25 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Updates an existing support type.
+        /// </summary>
+        /// <param name="id">The ID of the support type to update.</param>
+        /// <param name="updateDto">The updated support type details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] SupportTypeModel supportTypeModel)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateSupportTypeDto updateDto)
         {
             try
             {
-                supportTypeModel.Id = id;
-                var response = await _supportTypeService.UpdateAsync(supportTypeModel);
-                if (!response.Success)
+                if (id != updateDto.Id)
                 {
-                    return BadRequest(response.Message);
+                    return BadRequest("ID mismatch between URL and body");
                 }
-                return Ok(response.Data);
+
+                var model = updateDto.Adapt<SupportTypeModel>();
+                var response = await _supportTypeService.UpdateAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<SupportTypeDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -106,18 +112,65 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Deletes a support type.
+        /// </summary>
+        /// <param name="id">The ID of the support type to delete.</param>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             try
             {
                 var response = await _supportTypeService.DeleteAsync(id);
+                return ProcessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets all SPSA cases using a specific support type.
+        /// </summary>
+        /// <param name="id">The ID of the support type.</param>
+        [HttpGet("{id}/cases")]
+        public async Task<IActionResult> GetCasesAsync(Guid id)
+        {
+            try
+            {
+                var response = await _supportTypeService.GetByIdAsync(id);
                 if (!response.Success)
                 {
-                    return BadRequest(response.Message);
+                    return ProcessResponse(response);
                 }
-                return Ok(response.Message); // Return a success message or confirmation
+
+                var detailDto = response.Data.Adapt<SupportTypeDetailDto>();
+                return Ok(detailDto.Cases);
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets payment statistics by period for a specific support type.
+        /// </summary>
+        /// <param name="id">The ID of the support type.</param>
+        [HttpGet("{id}/payment-stats")]
+        public async Task<IActionResult> GetPaymentStatsAsync(Guid id)
+        {
+            try
+            {
+                var response = await _supportTypeService.GetByIdAsync(id);
+                if (!response.Success)
+                {
+                    return ProcessResponse(response);
+                }
+
+                var detailDto = response.Data.Adapt<SupportTypeDetailDto>();
+                return Ok(detailDto.PaymentsByPeriod);
             }
             catch (Exception ex)
             {

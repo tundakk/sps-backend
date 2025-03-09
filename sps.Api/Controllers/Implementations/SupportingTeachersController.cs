@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
-using sps.Api.Controllers.Base;
+using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
+using sps.Domain.Model.Dtos.SupportingTeacher;
 using sps.Domain.Model.Models;
+using sps.Domain.Model.ValueObjects;
+using Mapster;
+using sps.Domain.Model.Responses;
 
 namespace sps.API.Controllers.Implementations
 {
     /// <summary>
-    /// SupportingTeachersController
+    /// Controller for managing supporting teachers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -17,26 +21,27 @@ namespace sps.API.Controllers.Implementations
         /// <summary>
         /// Initializes a new instance of the <see cref="SupportingTeachersController"/> class.
         /// </summary>
-        /// <param name="supportingTeacherService">The SupportingTeacher service.</param>
+        /// <param name="supportingTeacherService">The supporting teacher service.</param>
         /// <param name="logger">The logger.</param>
-        public SupportingTeachersController(ISupportingTeacherService supportingTeacherService, ILogger<SupportingTeachersController> logger)
+        public SupportingTeachersController(
+            ISupportingTeacherService supportingTeacherService,
+            ILogger<SupportingTeachersController> logger)
             : base(logger)
         {
             _supportingTeacherService = supportingTeacherService;
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets all supporting teachers with basic information.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
             try
             {
                 var response = await _supportingTeacherService.GetAllAsync();
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<SupportingTeacherDto>>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -44,18 +49,18 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets detailed information about a specific supporting teacher.
+        /// </summary>
+        /// <param name="id">The ID of the teacher to retrieve.</param>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             try
             {
                 var response = await _supportingTeacherService.GetByIdAsync(id);
-                if (!response.Success)
-                {
-                    return NotFound(response.Message); // Use NotFound for invalid IDs
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<SupportingTeacherDetailDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -63,22 +68,26 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Creates a new supporting teacher.
+        /// </summary>
+        /// <param name="createDto">The teacher details.</param>
         [HttpPost]
-        public async Task<IActionResult> InsertAsync([FromBody] SupportingTeacherModel supportingTeacherModel)
+        public async Task<IActionResult> CreateAsync([FromBody] CreateSupportingTeacherDto createDto)
         {
             try
             {
-                var response = await _supportingTeacherService.InsertAsync(supportingTeacherModel);
-                if (!response.Success)
+                var model = new SupportingTeacherModel
                 {
-                    return BadRequest(response.Message);
-                }
-                if (response.Data == null)
-                {
-                    return BadRequest("Failed to create the SupportingTeacher");
-                }
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Data.Id }, response.Data);
+                    Name = createDto.Name,
+                    Email = new SensitiveString(createDto.Email),
+                    PlacesId = createDto.PlacesId
+                };
+
+                var response = await _supportingTeacherService.InsertAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<SupportingTeacherDto>>();
+                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
+                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -86,19 +95,32 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Updates an existing supporting teacher.
+        /// </summary>
+        /// <param name="id">The ID of the teacher to update.</param>
+        /// <param name="updateDto">The updated teacher details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] SupportingTeacherModel supportingTeacherModel)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateSupportingTeacherDto updateDto)
         {
             try
             {
-                supportingTeacherModel.Id = id;
-                var response = await _supportingTeacherService.UpdateAsync(supportingTeacherModel);
-                if (!response.Success)
+                if (id != updateDto.Id)
                 {
-                    return BadRequest(response.Message);
+                    return BadRequest("ID mismatch between URL and body");
                 }
-                return Ok(response.Data);
+
+                var model = new SupportingTeacherModel
+                {
+                    Id = updateDto.Id,
+                    Name = updateDto.Name,
+                    Email = new SensitiveString(updateDto.Email),
+                    PlacesId = updateDto.PlacesId
+                };
+
+                var response = await _supportingTeacherService.UpdateAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<SupportingTeacherDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -106,18 +128,65 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Deletes a supporting teacher.
+        /// </summary>
+        /// <param name="id">The ID of the teacher to delete.</param>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             try
             {
                 var response = await _supportingTeacherService.DeleteAsync(id);
+                return ProcessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets all SPSA cases assigned to a specific teacher.
+        /// </summary>
+        /// <param name="id">The ID of the teacher.</param>
+        [HttpGet("{id}/cases")]
+        public async Task<IActionResult> GetCasesAsync(Guid id)
+        {
+            try
+            {
+                var response = await _supportingTeacherService.GetByIdAsync(id);
                 if (!response.Success)
                 {
-                    return BadRequest(response.Message);
+                    return ProcessResponse(response);
                 }
-                return Ok(response.Message); // Return a success message or confirmation
+
+                var detailDto = response.Data.Adapt<SupportingTeacherDetailDto>();
+                return Ok(detailDto.Cases);
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets workload statistics by period for a specific teacher.
+        /// </summary>
+        /// <param name="id">The ID of the teacher.</param>
+        [HttpGet("{id}/period-workload")]
+        public async Task<IActionResult> GetPeriodWorkloadAsync(Guid id)
+        {
+            try
+            {
+                var response = await _supportingTeacherService.GetByIdAsync(id);
+                if (!response.Success)
+                {
+                    return ProcessResponse(response);
+                }
+
+                var detailDto = response.Data.Adapt<SupportingTeacherDetailDto>();
+                return Ok(detailDto.WorkloadByPeriod);
             }
             catch (Exception ex)
             {

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using sps.Api.Controllers.Base;
+using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
 using sps.Domain.Model.Models;
 
@@ -32,11 +32,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _studentService.GetAllAsync();
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Data);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -51,11 +47,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _studentService.GetByIdAsync(id);
-                if (!response.Success)
-                {
-                    return NotFound(response.Message); // Use NotFound for invalid IDs
-                }
-                return Ok(response.Data);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -70,15 +62,8 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _studentService.InsertAsync(studentModel);
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                if (response.Data == null)
-                {
-                    return BadRequest("Failed to create the Student");
-                }
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Data.Id }, response.Data);
+                return CreatedResponse(response, nameof(GetByIdAsync), 
+                    new { id = response.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -94,11 +79,7 @@ namespace sps.API.Controllers.Implementations
             {
                 studentModel.Id = id;
                 var response = await _studentService.UpdateAsync(studentModel);
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Data);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -113,11 +94,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _studentService.DeleteAsync(id);
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Message); // Return a success message or confirmation
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {

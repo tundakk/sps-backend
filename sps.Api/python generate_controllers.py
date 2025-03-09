@@ -26,7 +26,7 @@ os.makedirs(controllers_dir, exist_ok=True)
 
 # Function to create controller content
 def create_controller_content(model):
-    return f"""using sps.Api.Controllers.Base;
+    return f"""using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
 using sps.Domain.Model.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +37,7 @@ namespace sps.API.Controllers.Implementations
     /// <summary>
     /// {model}sController
     /// </summary>
-    [ApiController]
+    [APIController]
     [Route("api/[controller]")]
     public class {model}sController : BaseController<{model}sController>
     {{

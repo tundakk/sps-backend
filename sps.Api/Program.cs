@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using sps.API;
+using sps.API.Middleware;
+using sps.API.Mappings;
 using sps.BLL;
 using sps.BLL.Services.Implementations;
 using sps.Domain.Model.Services;
@@ -18,6 +20,7 @@ builder.Services.AddScoped<IEncryptionService, AESEncryptionService>();
 //builder.Services.AddSemanticKernel(); // Register Semantic Kernel services
 // Register Mapster mappings
 MappingConfig.RegisterMappings();
+DtoMappingConfig.RegisterDtoMappings();
 
 ////LOGGING
 //builder.Logging.ClearProviders();
@@ -103,9 +106,13 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    // Remove the default exception handler as we're using our custom one
+    // app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// Register the global exception middleware (should be early in the pipeline)
+app.UseGlobalExceptionHandler();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

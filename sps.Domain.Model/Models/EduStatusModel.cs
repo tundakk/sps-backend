@@ -6,6 +6,11 @@ namespace sps.Domain.Model.Models
 {
     public class EduStatusModel
     {
+        public EduStatusModel()
+        {
+            SpsaCases = new HashSet<SpsaCaseModel>();
+        }
+
         [Key]
         public Guid Id { get; set; }
 
@@ -13,6 +18,6 @@ namespace sps.Domain.Model.Models
         [MaxLength(100)]
         public string Name { get; set; }
         
-        public ICollection<SpsaCaseModel> SpsaCases { get; set; }
+        public ICollection<SpsaCaseModel> SpsaCases { get; init; }
     }
 }

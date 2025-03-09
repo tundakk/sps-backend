@@ -11,7 +11,7 @@ namespace sps.DAL.Configurations
             builder.HasKey(es => es.Id);
 
             // Configure properties
-            builder.Property(es => es.Status).IsRequired();
+            builder.Property(es => es.Name).IsRequired();
 
             // Configure relationships
             builder.HasMany(es => es.SpsaCases)

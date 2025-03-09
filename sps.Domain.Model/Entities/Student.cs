@@ -7,23 +7,23 @@ namespace sps.Domain.Model.Entities
         public Student()
         {
             SpsaCases = new HashSet<SpsaCase>();
+            Comments = new HashSet<StudentComment>();
         }
 
         public Guid Id { get; set; }
         public required string StudentNumber { get; set; }
         public required CPRNumber CPRNumber { get; set; }
         public required SensitiveString Name { get; set; }
-        public SensitiveString? Comment { get; set; }
         public DateTime? FinishedDate { get; set; }
 
         // Navigation properties
         public Guid? StartPeriodId { get; set; }
-
         public Period? StartPeriod { get; set; }
 
         public Guid? EducationId { get; set; }
         public Education? Education { get; set; }
 
         public ICollection<SpsaCase> SpsaCases { get; init; }
+        public ICollection<StudentComment> Comments { get; init; }
     }
 }

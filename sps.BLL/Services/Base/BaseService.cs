@@ -44,20 +44,14 @@ namespace sps.BLL.Services.Base
             {
                 var entities = await Repository.GetAllAsync();
                 var models = entities.Adapt<IEnumerable<TModel>>();
-                return new ServiceResponse<IEnumerable<TModel>>
-                {
-                    Data = models,
-                    Success = true
-                };
+                return ServiceResponse<IEnumerable<TModel>>.CreateSuccess(models);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error getting all entities");
-                return new ServiceResponse<IEnumerable<TModel>>
-                {
-                    Success = false,
-                    Message = ex.Message
-                };
+                return ServiceResponse<IEnumerable<TModel>>.CreateError(
+                    ex.Message, 
+                    "REPOSITORY_ERROR");
             }
         }
 
@@ -69,28 +63,18 @@ namespace sps.BLL.Services.Base
                 var entity = await Repository.GetByIdAsync(id);
                 if (entity == null)
                 {
-                    return new ServiceResponse<TModel>
-                    {
-                        Success = false,
-                        Message = "Entity not found"
-                    };
+                    return ServiceResponse<TModel>.CreateNotFound($"Entity with ID {id} not found");
                 }
 
                 var model = entity.Adapt<TModel>();
-                return new ServiceResponse<TModel>
-                {
-                    Data = model,
-                    Success = true
-                };
+                return ServiceResponse<TModel>.CreateSuccess(model);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error getting entity by id");
-                return new ServiceResponse<TModel>
-                {
-                    Success = false,
-                    Message = ex.Message
-                };
+                return ServiceResponse<TModel>.CreateError(
+                    ex.Message,
+                    "REPOSITORY_ERROR");
             }
         }
 
@@ -99,23 +83,25 @@ namespace sps.BLL.Services.Base
         {
             try
             {
+                // Add validation logic here if needed
+                if (model == null)
+                {
+                    return ServiceResponse<TModel>.CreateError(
+                        "Model cannot be null",
+                        "VALIDATION_ERROR");
+                }
+                
                 var entity = model.Adapt<TEntity>();
                 var insertedEntity = await Repository.InsertAsync(entity);
                 var insertedModel = insertedEntity.Adapt<TModel>();
-                return new ServiceResponse<TModel>
-                {
-                    Data = insertedModel,
-                    Success = true
-                };
+                return ServiceResponse<TModel>.CreateSuccess(insertedModel);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error inserting entity");
-                return new ServiceResponse<TModel>
-                {
-                    Success = false,
-                    Message = ex.Message
-                };
+                return ServiceResponse<TModel>.CreateError(
+                    ex.Message,
+                    "REPOSITORY_ERROR");
             }
         }
 
@@ -124,23 +110,25 @@ namespace sps.BLL.Services.Base
         {
             try
             {
+                // Add validation logic here if needed
+                if (model == null)
+                {
+                    return ServiceResponse<TModel>.CreateError(
+                        "Model cannot be null",
+                        "VALIDATION_ERROR");
+                }
+                
                 var entity = model.Adapt<TEntity>();
                 var updatedEntity = await Repository.UpdateAsync(entity);
                 var updatedModel = updatedEntity.Adapt<TModel>();
-                return new ServiceResponse<TModel>
-                {
-                    Data = updatedModel,
-                    Success = true
-                };
+                return ServiceResponse<TModel>.CreateSuccess(updatedModel);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error updating entity");
-                return new ServiceResponse<TModel>
-                {
-                    Success = false,
-                    Message = ex.Message
-                };
+                return ServiceResponse<TModel>.CreateError(
+                    ex.Message,
+                    "REPOSITORY_ERROR");
             }
         }
 
@@ -153,30 +141,18 @@ namespace sps.BLL.Services.Base
                 if (entity == null)
                 {
                     Logger.LogWarning("Entity with ID {Id} not found.", id);
-                    return new ServiceResponse<bool>
-                    {
-                        Success = false,
-                        Message = "Entity not found",
-                        Data = false
-                    };
+                    return ServiceResponse<bool>.CreateNotFound($"Entity with ID {id} not found");
                 }
 
                 await Repository.DeleteAsync(entity); // Perform the delete
-                return new ServiceResponse<bool>
-                {
-                    Success = true,
-                    Data = true
-                };
+                return ServiceResponse<bool>.CreateSuccess(true);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error deleting entity with ID {Id}", id);
-                return new ServiceResponse<bool>
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Data = false
-                };
+                return ServiceResponse<bool>.CreateError(
+                    ex.Message,
+                    "REPOSITORY_ERROR");
             }
         }
     }

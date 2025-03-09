@@ -1,20 +1,34 @@
-﻿namespace sps.Domain.Model.Entities
+﻿using sps.Domain.Model.ValueObjects;
+
+namespace sps.Domain.Model.Entities
 {
     // SpsaCase.cs
     public class SpsaCase
     {
+        public SpsaCase()
+        {
+            Comments = new HashSet<SpsaCaseComment>();
+        }
+
         public Guid Id { get; set; }
         public string SpsaCaseNumber { get; set; }
         public int HoursSought { get; set; }
         public int HoursSpent { get; set; }
-        public string Comment { get; set; }
+        public SensitiveString Comment { get; set; }
+        
+        public ICollection<SpsaCaseComment> Comments { get; init; }
+        
         public bool IsActive { get; set; }
         public DateTime? ApplicationDate { get; set; }
         public DateTime? LatestReapplicationDate { get; set; }
+        
+        public bool CourseDescriptionReceived { get; set; }
+        public bool TimesheetReceived { get; set; }
+        public bool StudentRefundReleased { get; set; }
+        public bool TeacherRefundReleased { get; set; }
+        public decimal SupportRate { get; set; }
 
-        // FKs
         public Guid StudentId { get; set; }
-
         public Student Student { get; set; }
 
         public Guid? SupportingTeacherId { get; set; }

@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using sps.BLL.Services.Implementations;
 using sps.BLL.Services.Interfaces;
 using sps.BLL.SMS;
+using sps.BLL.Email;  // Add the missing namespace for BrevoEmailSender
 using sps.DAL.DataModel;
 using sps.DAL.Repos.Implementations;
 using sps.DAL.Repos.Interfaces;
@@ -123,10 +124,13 @@ namespace sps.BLL
             services.AddTransient<ISMSService, SMSService>();
 
             // Register Email Sender Service - keeping email services as requested
-            services.AddTransient<IEmailSender<IdentityUser>, BrevoEmailSender>();
+            services.AddTransient<IEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
 
             // Register encryption service
             services.AddScoped<IEncryptionService, AESEncryptionService>();
+
+            // Register comment service
+            services.AddScoped<ICommentService, CommentService>();
 
             return services;
         }

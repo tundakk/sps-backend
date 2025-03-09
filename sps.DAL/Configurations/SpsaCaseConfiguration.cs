@@ -18,6 +18,19 @@ namespace sps.DAL.Configurations
             builder.Property(sc => sc.IsActive).IsRequired();
             builder.Property(sc => sc.ApplicationDate).IsRequired(false);
             builder.Property(sc => sc.LatestReapplicationDate).IsRequired(false);
+            
+            // Configure additional status fields
+            builder.Property(sc => sc.CourseDescriptionReceived).IsRequired();
+            builder.Property(sc => sc.TimesheetReceived).IsRequired();
+            builder.Property(sc => sc.StudentRefundReleased).IsRequired();
+            builder.Property(sc => sc.TeacherRefundReleased).IsRequired();
+            builder.Property(sc => sc.SupportRate).HasColumnType("decimal(18,2)").IsRequired();
+
+            // Configure comments relationship
+            builder.HasMany(sc => sc.Comments)
+                .WithOne(c => c.SpsaCase)
+                .HasForeignKey(c => c.SpsaCaseId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure relationships
             builder.HasOne(sc => sc.Student)

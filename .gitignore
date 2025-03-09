@@ -369,8 +369,8 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # API settings - keep these out of source control
-/sps.Api/appsettings.json
-/sps.Api/appsettings.Development.json
+/sps.API/appsettings.json
+/sps.API/appsettings.Development.json
 
 # TestResults
 /TestResults/

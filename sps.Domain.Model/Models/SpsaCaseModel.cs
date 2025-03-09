@@ -1,10 +1,18 @@
 using sps.Domain.Model.ValueObjects;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace sps.Domain.Model.Models
 {
     public class SpsaCaseModel
     {
+        public SpsaCaseModel()
+        {
+            Comments = new HashSet<SpsaCaseCommentModel>();
+        }
+
         [Key]
         public Guid Id { get; set; }
 
@@ -18,18 +26,24 @@ namespace sps.Domain.Model.Models
         [Required]
         public int HoursSpent { get; set; }
 
-        [MaxLength(500)]
         public SensitiveString Comment { get; set; }
+        
+        public ICollection<SpsaCaseCommentModel> Comments { get; init; }
 
         [Required]
         public bool IsActive { get; set; }
 
         public DateTime? ApplicationDate { get; set; }
         public DateTime? LatestReapplicationDate { get; set; }
+        
+        public bool CourseDescriptionReceived { get; set; }
+        public bool TimesheetReceived { get; set; }
+        public bool StudentRefundReleased { get; set; }
+        public bool TeacherRefundReleased { get; set; }
+        public decimal SupportRate { get; set; }
 
         [Required]
         public Guid StudentId { get; set; }
-
         public StudentModel Student { get; set; }
 
         public Guid? SupportingTeacherId { get; set; }
@@ -58,5 +72,14 @@ namespace sps.Domain.Model.Models
 
         public Guid? StudentPaymentId { get; set; }
         public StudentPaymentModel StudentPayment { get; set; }
+    }
+
+    public class SpsaCaseCommentModel
+    {
+        public Guid Id { get; set; }
+        public SensitiveString CommentText { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public Guid SpsaCaseId { get; set; }
+        public SpsaCaseModel SpsaCase { get; set; }
     }
 }

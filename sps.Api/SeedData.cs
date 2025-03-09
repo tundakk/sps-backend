@@ -174,10 +174,10 @@ namespace sps.API
 
             var eduStatuses = new List<EduStatus>
             {
-                new() { Id = Guid.NewGuid(), Status = "Active" },
-                new() { Id = Guid.NewGuid(), Status = "On Hold" },
-                new() { Id = Guid.NewGuid(), Status = "Completed" },
-                new() { Id = Guid.NewGuid(), Status = "Withdrawn" }
+                new() { Id = Guid.NewGuid(), Name = "Active" },
+                new() { Id = Guid.NewGuid(), Name = "On Hold" },
+                new() { Id = Guid.NewGuid(), Name = "Completed" },
+                new() { Id = Guid.NewGuid(), Name = "Withdrawn" }
             };
 
             await context.EduStatuses.AddRangeAsync(eduStatuses);

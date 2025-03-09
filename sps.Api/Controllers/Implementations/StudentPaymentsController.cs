@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
-using sps.Api.Controllers.Base;
+using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
+using sps.Domain.Model.Dtos.StudentPayment;
 using sps.Domain.Model.Models;
+using Mapster;
+using sps.Domain.Model.ValueObjects;
+using sps.Domain.Model.Responses;
 
 namespace sps.API.Controllers.Implementations
 {
     /// <summary>
-    /// StudentPaymentsController
+    /// Controller for managing student payments
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -17,7 +21,7 @@ namespace sps.API.Controllers.Implementations
         /// <summary>
         /// Initializes a new instance of the <see cref="StudentPaymentsController"/> class.
         /// </summary>
-        /// <param name="studentPaymentService">The StudentPayment service.</param>
+        /// <param name="studentPaymentService">The student payment service.</param>
         /// <param name="logger">The logger.</param>
         public StudentPaymentsController(IStudentPaymentService studentPaymentService, ILogger<StudentPaymentsController> logger)
             : base(logger)
@@ -25,18 +29,17 @@ namespace sps.API.Controllers.Implementations
             _studentPaymentService = studentPaymentService;
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets all student payments with basic information.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
             try
             {
                 var response = await _studentPaymentService.GetAllAsync();
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<StudentPaymentDto>>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -44,18 +47,18 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets detailed information about a specific student payment.
+        /// </summary>
+        /// <param name="id">The ID of the payment to retrieve.</param>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             try
             {
                 var response = await _studentPaymentService.GetByIdAsync(id);
-                if (!response.Success)
-                {
-                    return NotFound(response.Message); // Use NotFound for invalid IDs
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<StudentPaymentDetailDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -63,22 +66,26 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Creates a new student payment.
+        /// </summary>
+        /// <param name="createDto">The payment details.</param>
         [HttpPost]
-        public async Task<IActionResult> InsertAsync([FromBody] StudentPaymentModel studentPaymentModel)
+        public async Task<IActionResult> CreateAsync([FromBody] CreateStudentPaymentDto createDto)
         {
             try
             {
-                var response = await _studentPaymentService.InsertAsync(studentPaymentModel);
-                if (!response.Success)
+                var model = createDto.Adapt<StudentPaymentModel>();
+                model.AccountNumber = new SensitiveString(createDto.AccountNumber);
+                if (!string.IsNullOrEmpty(createDto.Comment))
                 {
-                    return BadRequest(response.Message);
+                    model.Comment = new SensitiveString(createDto.Comment);
                 }
-                if (response.Data == null)
-                {
-                    return BadRequest("Failed to create the StudentPayment");
-                }
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Data.Id }, response.Data);
+                
+                var response = await _studentPaymentService.InsertAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<StudentPaymentDto>>();
+                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
+                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -86,19 +93,31 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Updates an existing student payment.
+        /// </summary>
+        /// <param name="id">The ID of the payment to update.</param>
+        /// <param name="updateDto">The updated payment details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] StudentPaymentModel studentPaymentModel)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateStudentPaymentDto updateDto)
         {
             try
             {
-                studentPaymentModel.Id = id;
-                var response = await _studentPaymentService.UpdateAsync(studentPaymentModel);
-                if (!response.Success)
+                if (id != updateDto.Id)
                 {
-                    return BadRequest(response.Message);
+                    return BadRequest("ID mismatch between URL and body");
                 }
-                return Ok(response.Data);
+
+                var model = updateDto.Adapt<StudentPaymentModel>();
+                model.AccountNumber = new SensitiveString(updateDto.AccountNumber);
+                if (!string.IsNullOrEmpty(updateDto.Comment))
+                {
+                    model.Comment = new SensitiveString(updateDto.Comment);
+                }
+                
+                var response = await _studentPaymentService.UpdateAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<StudentPaymentDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -106,18 +125,65 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Deletes a student payment.
+        /// </summary>
+        /// <param name="id">The ID of the payment to delete.</param>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             try
             {
                 var response = await _studentPaymentService.DeleteAsync(id);
+                return ProcessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets all cases covered by a specific payment.
+        /// </summary>
+        /// <param name="id">The ID of the payment.</param>
+        [HttpGet("{id}/cases")]
+        public async Task<IActionResult> GetCasesAsync(Guid id)
+        {
+            try
+            {
+                var response = await _studentPaymentService.GetByIdAsync(id);
                 if (!response.Success)
                 {
-                    return BadRequest(response.Message);
+                    return ProcessResponse(response);
                 }
-                return Ok(response.Message); // Return a success message or confirmation
+
+                var detailDto = response.Data.Adapt<StudentPaymentDetailDto>();
+                return Ok(detailDto.Cases);
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets hours summary by support type for a specific payment.
+        /// </summary>
+        /// <param name="id">The ID of the payment.</param>
+        [HttpGet("{id}/hours-by-type")]
+        public async Task<IActionResult> GetHoursByTypeAsync(Guid id)
+        {
+            try
+            {
+                var response = await _studentPaymentService.GetByIdAsync(id);
+                if (!response.Success)
+                {
+                    return ProcessResponse(response);
+                }
+
+                var detailDto = response.Data.Adapt<StudentPaymentDetailDto>();
+                return Ok(detailDto.HoursByType);
             }
             catch (Exception ex)
             {

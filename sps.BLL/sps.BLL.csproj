@@ -34,8 +34,4 @@
     <ProjectReference Include="..\sps.Domain.Model\sps.Domain.Model.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\Interfaces\" />
-  </ItemGroup>
-
 </Project>

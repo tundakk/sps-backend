@@ -10,6 +10,7 @@ namespace sps.Domain.Model.Models
         public StudentModel()
         {
             SpsaCases = new HashSet<SpsaCaseModel>();
+            Comments = new HashSet<StudentCommentModel>();
         }
 
         [Key]
@@ -37,5 +38,6 @@ namespace sps.Domain.Model.Models
         public EducationModel? Education { get; set; }
         
         public ICollection<SpsaCaseModel> SpsaCases { get; init; }
+        public ICollection<StudentCommentModel> Comments { get; init; }
     }
 }

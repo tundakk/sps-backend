@@ -14,7 +14,7 @@
 //    /// Controller for handling authentication-related actions.
 //    /// </summary>
 //    [Route("api/[controller]")]
-//    [ApiController]
+//    [APIController]
 //    public class AuthController : ControllerBase
 //    {
 //        private readonly UserManager<IdentityUser<Guid>> _userManager;

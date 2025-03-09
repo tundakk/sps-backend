@@ -2,17 +2,23 @@
 {
     public class OpkvalSupervision
     {
+        public OpkvalSupervision()
+        {
+            SpsaCases = new HashSet<SpsaCase>();
+            Comments = new HashSet<OpkvalSupervisionComment>();
+        }
+
         public Guid Id { get; set; }
-        public string Status { get; set; } // Godkendt, Studerende skal give samtykke, Afventer STUK, Afslag STUK, Anulleret STUK
-
-        public int HoursSpentSupervision { get; set; }
-        public int HoursSpentOpkvalificering { get; set; }
+        public required DateTime Date { get; set; }
+        public string SupervisorName { get; set; }
+        public string Notes { get; set; }
+        public string Outcome { get; set; }
         public int HoursSought { get; set; }
-
-        //TODO:
-        // maybe make sure that HoursSpentSupervision + HoursSpentOpkvalificering <= HoursSought with business logic
-
-        // Navigation
-        public ICollection<SpsaCase> SpsaCases { get; set; }
+        public int QualificationHoursSpent { get; set; }
+        public int SupervisionHoursSpent { get; set; }
+        public string Status { get; set; }
+        
+        public ICollection<SpsaCase> SpsaCases { get; init; }
+        public ICollection<OpkvalSupervisionComment> Comments { get; init; }
     }
 }

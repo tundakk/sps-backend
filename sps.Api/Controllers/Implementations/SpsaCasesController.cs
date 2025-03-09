@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
-using sps.Api.Controllers.Base;
+using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
+using sps.Domain.Model.Dtos.SpsaCase;
+using Mapster;
 using sps.Domain.Model.Models;
+using sps.Domain.Model.Responses;
 
 namespace sps.API.Controllers.Implementations
 {
     /// <summary>
-    /// SpsaCasesController
+    /// Controller for managing SPSA (Special Pedagogical Support Administration) cases
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -25,18 +28,17 @@ namespace sps.API.Controllers.Implementations
             _spsaCaseService = spsaCaseService;
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets all SPSA cases with basic information.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
             try
             {
                 var response = await _spsaCaseService.GetAllAsync();
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<SpsaCaseDto>>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -44,18 +46,18 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Gets detailed information about a specific SPSA case.
+        /// </summary>
+        /// <param name="id">The ID of the SPSA case to retrieve.</param>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             try
             {
                 var response = await _spsaCaseService.GetByIdAsync(id);
-                if (!response.Success)
-                {
-                    return NotFound(response.Message); // Use NotFound for invalid IDs
-                }
-                return Ok(response.Data);
+                var dtoResponse = response.Adapt<ServiceResponse<SpsaCaseDetailDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -63,22 +65,20 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Creates a new SPSA case.
+        /// </summary>
+        /// <param name="createDto">The SPSA case details.</param>
         [HttpPost]
-        public async Task<IActionResult> InsertAsync([FromBody] SpsaCaseModel spsaCaseModel)
+        public async Task<IActionResult> CreateAsync([FromBody] CreateSpsaCaseDto createDto)
         {
             try
             {
-                var response = await _spsaCaseService.InsertAsync(spsaCaseModel);
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                if (response.Data == null)
-                {
-                    return BadRequest("Failed to create the SpsaCase");
-                }
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = response.Data.Id }, response.Data);
+                var model = createDto.Adapt<SpsaCaseModel>();
+                var response = await _spsaCaseService.InsertAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<SpsaCaseDto>>();
+                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
+                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -86,19 +86,25 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Updates an existing SPSA case.
+        /// </summary>
+        /// <param name="id">The ID of the SPSA case to update.</param>
+        /// <param name="updateDto">The updated SPSA case details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] SpsaCaseModel spsaCaseModel)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateSpsaCaseDto updateDto)
         {
             try
             {
-                spsaCaseModel.Id = id;
-                var response = await _spsaCaseService.UpdateAsync(spsaCaseModel);
-                if (!response.Success)
+                if (id != updateDto.Id)
                 {
-                    return BadRequest(response.Message);
+                    return BadRequest("ID mismatch between URL and body");
                 }
-                return Ok(response.Data);
+
+                var model = updateDto.Adapt<SpsaCaseModel>();
+                var response = await _spsaCaseService.UpdateAsync(model);
+                var dtoResponse = response.Adapt<ServiceResponse<SpsaCaseDto>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
@@ -106,18 +112,36 @@ namespace sps.API.Controllers.Implementations
             }
         }
 
-        ///<inheritdoc/>
+        /// <summary>
+        /// Deletes a SPSA case.
+        /// </summary>
+        /// <param name="id">The ID of the SPSA case to delete.</param>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             try
             {
                 var response = await _spsaCaseService.DeleteAsync(id);
-                if (!response.Success)
-                {
-                    return BadRequest(response.Message);
-                }
-                return Ok(response.Message); // Return a success message or confirmation
+                return ProcessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets all SPSA cases for a specific student.
+        /// </summary>
+        /// <param name="studentId">The ID of the student.</param>
+        [HttpGet("student/{studentId}")]
+        public async Task<IActionResult> GetByStudentIdAsync(Guid studentId)
+        {
+            try
+            {
+                var response = await _spsaCaseService.GetByStudentIdAsync(studentId);
+                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<SpsaCaseDto>>>();
+                return ProcessResponse(dtoResponse);
             }
             catch (Exception ex)
             {
