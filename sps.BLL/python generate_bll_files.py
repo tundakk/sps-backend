@@ -2,7 +2,7 @@ import os
 
 # Define the models you want to create interfaces and services for
 models = [
-   'Student',
+'Student',
 'Education',
 'SpsaCase',
 'Period',
@@ -46,7 +46,7 @@ def create_interface_content(model):
 def create_service_content(model):
     return f"""namespace sps.BLL.Infrastructure.Services.Implementations
 {{
-    using sps.BLL.Infrastructure.Interfaces;
+    using sps.BLL.Services.Interfaces;
     using sps.DAL.Entities;
     using sps.DAL.Repos.Interfaces;
     using sps.Domain.Model.Models;

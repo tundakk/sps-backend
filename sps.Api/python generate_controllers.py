@@ -2,13 +2,20 @@ import os
 
 # Define the models for which you want to create controllers
 models = [
-    'AppUser',
-    'Booking',
-    'DesiredTimeslot',
-    'Room',
-    'Timeslot',
-    'ServiceMessage',
-    'LostAndFound'
+    'Student',
+'Education',
+'SpsaCase',
+'Period',
+'Place',
+'Diagnosis',
+'EduCategory',
+'StudentPayment',
+'SupportingTeacher',
+'OpkvalSupervision',
+'EduStatus',
+'EducationPeriodRate',
+'TeacherPayment',
+'SupportType',
 ]
 
 # Directory to place the generated controller files (inside Implementations folder)
@@ -19,9 +26,8 @@ os.makedirs(controllers_dir, exist_ok=True)
 
 # Function to create controller content
 def create_controller_content(model):
-    return f"""using sps.Api.Controllers.Base;
+    return f"""using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
-using sps.BLL.Infrastructure.Interfaces;
 using sps.Domain.Model.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -31,7 +37,7 @@ namespace sps.API.Controllers.Implementations
     /// <summary>
     /// {model}sController
     /// </summary>
-    [ApiController]
+    [APIController]
     [Route("api/[controller]")]
     public class {model}sController : BaseController<{model}sController>
     {{

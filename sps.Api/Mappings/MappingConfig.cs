@@ -1,5 +1,6 @@
 ﻿using sps.Domain.Model.Entities;
 using sps.Domain.Model.Models;
+using sps.Domain.Model.ValueObjects;
 using Mapster;
 using Microsoft.AspNetCore.Identity;
 
@@ -14,136 +15,150 @@ public static class MappingConfig
     public static void RegisterMappings()
     {
         // Identity User mapping
-        TypeAdapterConfig<IdentityUser<Guid>, AppUserModel>.NewConfig()
+        TypeAdapterConfig<IdentityUser<Guid>, IdentityUserModel>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.UserName, src => src.UserName)
+            .Map(dest => dest.UserName, src => src.UserName ?? string.Empty)
+            .Map(dest => dest.Email, src => src.Email ?? string.Empty)
+            .Map(dest => dest.PhoneNumber, src => src.PhoneNumber ?? string.Empty)
+            .Map(dest => dest.EmailConfirmed, src => src.EmailConfirmed);
+
+        // Student mapping
+        TypeAdapterConfig<Student, StudentModel>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.StudentNumber, src => src.StudentNumber)
+            .Map(dest => dest.CPRNumber, src => src.CPRNumber)
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.FinishedDate, src => src.FinishedDate)
+            .Map(dest => dest.StartPeriodId, src => src.StartPeriodId)
+            .Map(dest => dest.EducationId, src => src.EducationId);
+
+        TypeAdapterConfig<StudentModel, Student>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.StudentNumber, src => src.StudentNumber)
+            .Map(dest => dest.CPRNumber, src => src.CPRNumber)
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.FinishedDate, src => src.FinishedDate)
+            .Map(dest => dest.StartPeriodId, src => src.StartPeriodId)
+            .Map(dest => dest.EducationId, src => src.EducationId);
+
+        // SpsaCase mapping
+        TypeAdapterConfig<SpsaCase, SpsaCaseModel>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.SpsaCaseNumber, src => src.SpsaCaseNumber)
+            .Map(dest => dest.HoursSought, src => src.HoursSought)
+            .Map(dest => dest.HoursSpent, src => src.HoursSpent)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.IsActive, src => src.IsActive)
+            .Map(dest => dest.ApplicationDate, src => src.ApplicationDate)
+            .Map(dest => dest.LatestReapplicationDate, src => src.LatestReapplicationDate)
+            .Map(dest => dest.StudentId, src => src.StudentId)
+            .Map(dest => dest.SupportingTeacherId, src => src.SupportingTeacherId)
+            .Map(dest => dest.AppliedPeriodId, src => src.AppliedPeriodId);
+
+        TypeAdapterConfig<SpsaCaseModel, SpsaCase>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.SpsaCaseNumber, src => src.SpsaCaseNumber)
+            .Map(dest => dest.HoursSought, src => src.HoursSought)
+            .Map(dest => dest.HoursSpent, src => src.HoursSpent)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.IsActive, src => src.IsActive)
+            .Map(dest => dest.ApplicationDate, src => src.ApplicationDate)
+            .Map(dest => dest.LatestReapplicationDate, src => src.LatestReapplicationDate)
+            .Map(dest => dest.StudentId, src => src.StudentId)
+            .Map(dest => dest.SupportingTeacherId, src => src.SupportingTeacherId)
+            .Map(dest => dest.AppliedPeriodId, src => src.AppliedPeriodId);
+
+        // SupportingTeacher mapping
+        TypeAdapterConfig<SupportingTeacher, SupportingTeacherModel>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Name, src => src.Name)
             .Map(dest => dest.Email, src => src.Email)
-            .Map(dest => dest.PhoneNumber, src => src.PhoneNumber);
+            .Map(dest => dest.PlacesId, src => src.PlacesId);
 
-        // UserProfile mapping
-        TypeAdapterConfig<UserProfile, UserProfileModel>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.ApartmentNumber, src => src.ApartmentNumber)
-            .Map(dest => dest.PhoneNumberSecondary, src => src.PhoneNumberSecondary)
-            .Map(dest => dest.EmailOptOut, src => src.EmailOptOut)
-            .Map(dest => dest.SmsOptOut, src => src.SmsOptOut)
-            .Map(dest => dest.PinCode, src => src.PinCode);
-
-        TypeAdapterConfig<UserProfileModel, UserProfile>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.ApartmentNumber, src => src.ApartmentNumber)
-            .Map(dest => dest.PhoneNumberSecondary, src => src.PhoneNumberSecondary)
-            .Map(dest => dest.EmailOptOut, src => src.EmailOptOut)
-            .Map(dest => dest.SmsOptOut, src => src.SmsOptOut)
-            .Map(dest => dest.PinCode, src => src.PinCode);
-
-        // Booking mapping
-        TypeAdapterConfig<Booking, BookingModel>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.TimeslotId, src => src.TimeslotId)
-            .Map(dest => dest.Status, src => src.Status)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.UpdatedAt, src => src.UpdatedAt);
-
-        TypeAdapterConfig<BookingModel, Booking>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.TimeslotId, src => src.TimeslotId)
-            .Map(dest => dest.Status, src => src.Status)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.UpdatedAt, src => src.UpdatedAt);
-
-        // DesiredTimeslot mapping
-        TypeAdapterConfig<DesiredTimeslot, DesiredTimeslotModel>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.TimeslotId, src => src.TimeslotId)
-            .Map(dest => dest.NotificationSent, src => src.NotificationSent)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt);
-
-        TypeAdapterConfig<DesiredTimeslotModel, DesiredTimeslot>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.TimeslotId, src => src.TimeslotId)
-            .Map(dest => dest.NotificationSent, src => src.NotificationSent)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt);
-
-        // Room mapping
-        TypeAdapterConfig<Room, RoomModel>.NewConfig()
+        TypeAdapterConfig<SupportingTeacherModel, SupportingTeacher>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.Location, src => src.Location)
-            .Map(dest => dest.IsAvailable, src => src.IsAvailable)
-            .Map(dest => dest.MaxCapacity, src => src.MaxCapacity);
+            .Map(dest => dest.Email, src => src.Email)
+            .Map(dest => dest.PlacesId, src => src.PlacesId);
 
-        TypeAdapterConfig<RoomModel, Room>.NewConfig()
+        // StudentPayment mapping
+        TypeAdapterConfig<StudentPayment, StudentPaymentModel>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Date, src => src.Date)
+            .Map(dest => dest.AccountNumber, src => src.AccountNumber)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Amount, src => src.Amount)
+            .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
+            .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
+
+        TypeAdapterConfig<StudentPaymentModel, StudentPayment>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Date, src => src.Date)
+            .Map(dest => dest.AccountNumber, src => src.AccountNumber)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Amount, src => src.Amount)
+            .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
+            .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
+
+        // TeacherPayment mapping
+        TypeAdapterConfig<TeacherPayment, TeacherPaymentModel>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Date, src => src.Date)
+            .Map(dest => dest.Amount, src => src.Amount)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
+            .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
+
+        TypeAdapterConfig<TeacherPaymentModel, TeacherPayment>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Date, src => src.Date)
+            .Map(dest => dest.Amount, src => src.Amount)
+            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
+            .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
+
+        // Place mapping
+        TypeAdapterConfig<Place, PlaceModel>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.Location, src => src.Location)
-            .Map(dest => dest.IsAvailable, src => src.IsAvailable)
-            .Map(dest => dest.MaxCapacity, src => src.MaxCapacity);
+            .Map(dest => dest.PlaceNumber, src => src.PlaceNumber)
+            .Map(dest => dest.Alias, src => src.Alias);
 
-        // Timeslot mapping
-        TypeAdapterConfig<Timeslot, TimeslotModel>.NewConfig()
+        TypeAdapterConfig<PlaceModel, Place>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.RoomId, src => src.RoomId)
-            .Map(dest => dest.StartTime, src => src.SlotTime.Start)
-            .Map(dest => dest.EndTime, src => src.SlotTime.End)
-            .Map(dest => dest.IsAvailable, src => src.IsAvailable)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.UpdatedAt, src => src.UpdatedAt);
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.PlaceNumber, src => src.PlaceNumber)
+            .Map(dest => dest.Alias, src => src.Alias);
 
-        TypeAdapterConfig<TimeslotModel, Timeslot>.NewConfig()
+        // EduCategory mapping
+        TypeAdapterConfig<EduCategory, EduCategoryModel>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.RoomId, src => src.RoomId)
-            .Map(dest => dest.SlotTime.Start, src => src.StartTime)
-            .Map(dest => dest.SlotTime.End, src => src.EndTime)
-            .Map(dest => dest.IsAvailable, src => src.IsAvailable)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.UpdatedAt, src => src.UpdatedAt);
+            .Map(dest => dest.Name, src => src.Name);
 
-        // LostAndFound mapping
-        TypeAdapterConfig<LostAndFound, LostAndFoundModel>.NewConfig()
+        TypeAdapterConfig<EduCategoryModel, EduCategory>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.PictureUrl, src => src.PictureUrl)
-            .Map(dest => dest.DateFound, src => src.DateFound);
+            .Map(dest => dest.Name, src => src.Name);
 
-        TypeAdapterConfig<LostAndFoundModel, LostAndFound>.NewConfig()
+        // Education mapping
+        TypeAdapterConfig<Education, EducationModel>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.PictureUrl, src => src.PictureUrl)
-            .Map(dest => dest.DateFound, src => src.DateFound);
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.EduCategoryId, src => src.EduCategoryId);
 
-        // ServiceMessage mapping
-        TypeAdapterConfig<ServiceMessage, ServiceMessageModel>.NewConfig()
+        TypeAdapterConfig<EducationModel, Education>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Message, src => src.Message)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.IsRead, src => src.IsRead);
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.EduCategoryId, src => src.EduCategoryId);
 
-        TypeAdapterConfig<ServiceMessageModel, ServiceMessage>.NewConfig()
+        // Period mapping
+        TypeAdapterConfig<Period, PeriodModel>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Message, src => src.Message)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.IsRead, src => src.IsRead);
+            .Map(dest => dest.Name, src => src.Name);
 
-        // ChatMessage mapping
-        TypeAdapterConfig<ChatMessage, ChatMessageModel>.NewConfig()
+        TypeAdapterConfig<PeriodModel, Period>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.SenderId, src => src.SenderId)
-            .Map(dest => dest.ReceiverId, src => src.ReceiverId)
-            .Map(dest => dest.Message, src => src.Message)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.IsRead, src => src.IsRead);
-
-        TypeAdapterConfig<ChatMessageModel, ChatMessage>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.SenderId, src => src.SenderId)
-            .Map(dest => dest.ReceiverId, src => src.ReceiverId)
-            .Map(dest => dest.Message, src => src.Message)
-            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
-            .Map(dest => dest.IsRead, src => src.IsRead);
+            .Map(dest => dest.Name, src => src.Name);
     }
 }

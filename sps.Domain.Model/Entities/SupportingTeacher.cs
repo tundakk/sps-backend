@@ -1,17 +1,23 @@
-﻿namespace sps.Domain.Model.Entities
+﻿using System;
+using System.Collections.Generic;
+using sps.Domain.Model.ValueObjects;
+
+namespace sps.Domain.Model.Entities
 {
-    
-public class SupportingTeacher
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string Email { get; set; }
-    
-    // FK
-    public int? PlacesId { get; set; }
-    public Place Place { get; set; }
-    
-    // Navigation
-    public ICollection<SpsaCase> SpsaCases { get; set; }
-}
+    public class SupportingTeacher
+    {
+        public SupportingTeacher()
+        {
+            SpsaCases = new HashSet<SpsaCase>();
+        }
+
+        public Guid Id { get; set; }
+        public required string Name { get; set; }
+        public required SensitiveString Email { get; set; }
+        
+        public Guid? PlacesId { get; set; }
+        public Place? Place { get; set; }
+        
+        public ICollection<SpsaCase> SpsaCases { get; init; }
+    }
 }

@@ -1,13 +1,13 @@
-namespace sps.DAL.Repos
-{
-    using sps.DAL.DataModel;
-    using sps.DAL.Entities;
-    using sps.DAL.Repos.Base;
-    using sps.DAL.Repos.Interfaces;
+using sps.DAL.DataModel;
+using sps.DAL.Repos.Base;
+using sps.DAL.Repos.Interfaces;
+using sps.Domain.Model.Entities;
 
+namespace sps.DAL.Repos.Implementations
+{
     public class SupportTypeRepo : BaseRepo<SupportType>, ISupportTypeRepo
     {
-        public SupportTypeRepo(DataContext dataContext) : base(dataContext)
+        public SupportTypeRepo(SpsDbContext dataContext) : base(dataContext)
         {
         }
     }

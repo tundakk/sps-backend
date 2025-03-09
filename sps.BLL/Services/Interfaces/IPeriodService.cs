@@ -1,8 +1,7 @@
-namespace sps.BLL.Infrastructure.Interfaces
+namespace sps.BLL.Services.Interfaces
 {
+    using sps.BLL.Services.Base;
     using sps.Domain.Model.Models;
-    using sps.Domain.Model.Responses;
-    using System.Collections.Generic;
 
     public interface IPeriodService : IBaseService<PeriodModel>
     {

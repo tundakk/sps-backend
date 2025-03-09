@@ -1,17 +1,17 @@
-﻿using sps.BLL.Infrastructure.Interfaces;
-using sps.BLL.Infrastructure.Services.Implementations;
-using sps.BLL.SMS;
-using sps.DAL.DataModel;
-using sps.DAL.Repos;
-using sps.DAL.Repos.Implementations;
-using sps.DAL.Repos.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using sps.BLL.Services.Implementations;
+using sps.BLL.Services.Interfaces;
+using sps.BLL.SMS;
+using sps.BLL.Email;  // Add the missing namespace for BrevoEmailSender
+using sps.DAL.DataModel;
+using sps.DAL.Repos.Implementations;
+using sps.DAL.Repos.Interfaces;
+using sps.Domain.Model.Services;
 using System.Text;
 
 namespace sps.BLL
@@ -37,14 +37,14 @@ namespace sps.BLL
             services.AddDbContext<SpsDbContext>(options =>
                 options.UseSqlServer(spsConnectionString));
 
-            // Register IdentityDbContext for Identity tables
+            // Register SpsIdentityDbContext for Identity tables
             var identityConnectionString = configuration.GetConnectionString("IdentityConnection")
                 ?? throw new InvalidOperationException("Connection string 'IdentityConnection' not found.");
 
-            services.AddDbContext<IdentityDbContext>(options =>
+            services.AddDbContext<SpsIdentityDbContext>(options =>
                 options.UseSqlServer(identityConnectionString));
 
-            // Register Identity services
+            // Register Identity services with SpsIdentityDbContext
             services.AddIdentity<IdentityUser<Guid>, IdentityRole<Guid>>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = true;
@@ -57,7 +57,7 @@ namespace sps.BLL
                 options.User.RequireUniqueEmail = true;
             })
             .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<IdentityDbContext>() // Use IdentityDbContext for identity stores
+            .AddEntityFrameworkStores<SpsIdentityDbContext>() // Use SpsIdentityDbContext for identity stores
             .AddDefaultTokenProviders();
 
             // Configure JWT authentication
@@ -124,7 +124,13 @@ namespace sps.BLL
             services.AddTransient<ISMSService, SMSService>();
 
             // Register Email Sender Service - keeping email services as requested
-            services.AddTransient<IEmailSender, BrevoEmailSender>();
+            services.AddTransient<IEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
+
+            // Register encryption service
+            services.AddScoped<IEncryptionService, AESEncryptionService>();
+
+            // Register comment service
+            services.AddScoped<ICommentService, CommentService>();
 
             return services;
         }

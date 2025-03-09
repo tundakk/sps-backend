@@ -1,13 +1,13 @@
-namespace sps.DAL.Repos
-{
-    using sps.DAL.DataModel;
-    using sps.DAL.Entities;
-    using sps.DAL.Repos.Base;
-    using sps.DAL.Repos.Interfaces;
+using sps.DAL.DataModel;
+using sps.DAL.Repos.Base;
+using sps.DAL.Repos.Interfaces;
+using sps.Domain.Model.Entities;
 
+namespace sps.DAL.Repos.Implementations
+{
     public class EducationPeriodRateRepo : BaseRepo<EducationPeriodRate>, IEducationPeriodRateRepo
     {
-        public EducationPeriodRateRepo(DataContext dataContext) : base(dataContext)
+        public EducationPeriodRateRepo(SpsDbContext dataContext) : base(dataContext)
         {
         }
     }

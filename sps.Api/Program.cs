@@ -1,6 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using sps.API;
+using sps.API.Middleware;
+using sps.API.Mappings;
 using sps.BLL;
+using sps.BLL.Services.Implementations;
+using sps.Domain.Model.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +13,14 @@ builder.Services.AddControllers();
 
 // Add Business Logic Layer services, including DbContext, Identity, Repositories, and other services.
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
+builder.Services.AddScoped<IEncryptionService, AESEncryptionService>();
 
 // Add semantic kernel
 
 //builder.Services.AddSemanticKernel(); // Register Semantic Kernel services
 // Register Mapster mappings
 MappingConfig.RegisterMappings();
+DtoMappingConfig.RegisterDtoMappings();
 
 ////LOGGING
 //builder.Logging.ClearProviders();
@@ -99,9 +106,13 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    // Remove the default exception handler as we're using our custom one
+    // app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// Register the global exception middleware (should be early in the pipeline)
+app.UseGlobalExceptionHandler();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -116,6 +127,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 // If you have identity endpoints, make sure to map them
-app.MapIdentityApi<AppUser>();
+app.MapIdentityApi<IdentityUser<Guid>>();
 
 app.Run();

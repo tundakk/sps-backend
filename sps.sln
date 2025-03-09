@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sps.Api", "sps.Api\sps.Api.csproj", "{9F32C52B-E984-4819-A323-43A07071D084}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "sps.API", "sps.API\sps.API.csproj", "{9F32C52B-E984-4819-A323-43A07071D084}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D964FE0C-604B-40C4-B784-BD59C21E2424} = {D964FE0C-604B-40C4-B784-BD59C21E2424}
 		{DE7859B8-F233-46B4-80B5-CE7C67DBCF98} = {DE7859B8-F233-46B4-80B5-CE7C67DBCF98}
