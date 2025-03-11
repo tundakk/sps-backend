@@ -8,18 +8,36 @@ namespace sps.DAL.Configurations
     {
         public void Configure(EntityTypeBuilder<OpkvalSupervision> builder)
         {
-            builder.HasKey(os => os.Id);
+            builder.HasKey(s => s.Id);
 
-            // Configure properties
-            builder.Property(os => os.Status).IsRequired();
-            builder.Property(os => os.HoursSpentSupervision).IsRequired();
-            builder.Property(os => os.HoursSpentOpkvalificering).IsRequired();
-            builder.Property(os => os.HoursSought).IsRequired();
+            builder.Property(s => s.CreateDate)
+                .IsRequired();
 
-            // Configure relationships
-            builder.HasMany(os => os.SpsaCases)
-                .WithOne(sc => sc.OpkvalSupervision)
-                .HasForeignKey(sc => sc.OpkvalSupervisionId)
+            builder.Property(s => s.LastUpdatedBy)
+                .IsRequired(false);
+
+            builder.Property(s => s.HoursSought)
+                .IsRequired(false);
+
+            builder.Property(s => s.SupervisionHoursSpent)
+                .IsRequired();
+
+            builder.Property(s => s.QualificationHoursSpent)
+                .IsRequired();
+
+            builder.Property(s => s.Status)
+                .IsRequired();
+
+            // Configure relationship with Comments
+            builder.HasMany(s => s.Comments)
+                .WithOne(c => c.OpkvalSupervision)
+                .HasForeignKey(c => c.OpkvalSupervisionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure relationship with SpsaCases
+            builder.HasMany(s => s.SpsaCases)
+                .WithOne(c => c.OpkvalSupervision)
+                .HasForeignKey(c => c.OpkvalSupervisionId)
                 .OnDelete(DeleteBehavior.SetNull);
         }
     }

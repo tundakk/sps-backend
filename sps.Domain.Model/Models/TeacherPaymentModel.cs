@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using sps.Domain.Model.Entities;
 using sps.Domain.Model.ValueObjects;
 
 namespace sps.Domain.Model.Models
@@ -10,7 +11,7 @@ namespace sps.Domain.Model.Models
         public TeacherPaymentModel()
         {
             SpsaCases = new HashSet<SpsaCaseModel>();
-            Comments = new HashSet<TeacherPaymentCommentModel>();
+            Comments = new HashSet<Comment>();
         }
 
         [Key]
@@ -32,6 +33,6 @@ namespace sps.Domain.Model.Models
         public SupportTypeModel? SupportType { get; set; }
 
         public ICollection<SpsaCaseModel> SpsaCases { get; init; }
-        public ICollection<TeacherPaymentCommentModel> Comments { get; init; }
+       public ICollection<Comment> Comments { get; init; }
     }
 }

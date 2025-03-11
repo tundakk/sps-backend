@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
-using sps.Domain.Model.Dtos.Education;
 using sps.Domain.Model.Models;
 using sps.Domain.Model.Responses;
 using Mapster;
@@ -47,8 +46,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _educationService.GetAllAsync();
-                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<EducationDto>>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -66,8 +64,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _educationService.GetByIdAsync(id);
-                var dtoResponse = response.Adapt<ServiceResponse<EducationDetailDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -78,17 +75,15 @@ namespace sps.API.Controllers.Implementations
         /// <summary>
         /// Creates a new education program.
         /// </summary>
-        /// <param name="createDto">The program details.</param>
+        /// <param name="model">The program details.</param>
         [HttpPost]
-        public async Task<IActionResult> CreateAsync([FromBody] CreateEducationDto createDto)
+        public async Task<IActionResult> CreateAsync([FromBody] EducationModel model)
         {
             try
             {
-                var model = createDto.Adapt<EducationModel>();
                 var response = await _educationService.InsertAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<EducationDto>>();
-                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
-                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
+                return CreatedResponse(response, nameof(GetByIdAsync), 
+                    new { id = response.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -100,21 +95,19 @@ namespace sps.API.Controllers.Implementations
         /// Updates an existing education program.
         /// </summary>
         /// <param name="id">The ID of the program to update.</param>
-        /// <param name="updateDto">The updated program details.</param>
+        /// <param name="model">The updated program details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateEducationDto updateDto)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] EducationModel model)
         {
             try
             {
-                if (id != updateDto.Id)
+                if (id != model.Id)
                 {
                     return BadRequest("ID mismatch between URL and body");
                 }
 
-                var model = updateDto.Adapt<EducationModel>();
                 var response = await _educationService.UpdateAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<EducationDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -150,13 +143,13 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _educationService.GetByIdAsync(id);
-                if (!response.Success)
+                if (!response.Success || response.Data == null)
                 {
                     return ProcessResponse(response);
                 }
 
-                var detailDto = response.Data.Adapt<EducationDetailDto>();
-                return Ok(detailDto.PeriodRates);
+                var education = response.Data;
+                return Ok(education.EducationPeriodRates);
             }
             catch (Exception ex)
             {
@@ -174,13 +167,13 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _educationService.GetByIdAsync(id);
-                if (!response.Success)
+                if (!response.Success || response.Data == null)
                 {
                     return ProcessResponse(response);
                 }
 
-                var detailDto = response.Data.Adapt<EducationDetailDto>();
-                return Ok(detailDto.Students);
+                var education = response.Data;
+                return Ok(education.Students);
             }
             catch (Exception ex)
             {
@@ -192,22 +185,20 @@ namespace sps.API.Controllers.Implementations
         /// Creates a new period rate for an education program.
         /// </summary>
         /// <param name="id">The ID of the education program.</param>
-        /// <param name="createDto">The rate configuration details.</param>
+        /// <param name="model">The rate configuration details.</param>
         [HttpPost("{id}/period-rates")]
-        public async Task<IActionResult> CreatePeriodRateAsync(Guid id, [FromBody] CreatePeriodRateDto createDto)
+        public async Task<IActionResult> CreatePeriodRateAsync(Guid id, [FromBody] EducationPeriodRateModel model)
         {
             try
             {
-                if (id != createDto.EducationId)
+                if (id != model.EducationId)
                 {
                     return BadRequest("ID mismatch between URL and body");
                 }
 
-                var model = createDto.Adapt<EducationPeriodRateModel>();
                 var response = await _rateService.InsertAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<EducationPeriodRateDto>>();
-                return CreatedResponse(dtoResponse, nameof(GetPeriodRatesAsync), 
-                    new { id = createDto.EducationId });
+                return CreatedResponse(response, nameof(GetPeriodRatesAsync), 
+                    new { id = model.EducationId });
             }
             catch (Exception ex)
             {
@@ -220,21 +211,19 @@ namespace sps.API.Controllers.Implementations
         /// </summary>
         /// <param name="id">The ID of the education program.</param>
         /// <param name="rateId">The ID of the rate configuration to update.</param>
-        /// <param name="updateDto">The updated rate configuration details.</param>
+        /// <param name="model">The updated rate configuration details.</param>
         [HttpPut("{id}/period-rates/{rateId}")]
-        public async Task<IActionResult> UpdatePeriodRateAsync(Guid id, Guid rateId, [FromBody] UpdatePeriodRateDto updateDto)
+        public async Task<IActionResult> UpdatePeriodRateAsync(Guid id, Guid rateId, [FromBody] EducationPeriodRateModel model)
         {
             try
             {
-                if (id != updateDto.EducationId || rateId != updateDto.Id)
+                if (id != model.EducationId || rateId != model.Id)
                 {
                     return BadRequest("ID mismatch between URL and body");
                 }
 
-                var model = updateDto.Adapt<EducationPeriodRateModel>();
                 var response = await _rateService.UpdateAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<EducationPeriodRateDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {

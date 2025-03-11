@@ -22,13 +22,50 @@ public static class MappingConfig
             .Map(dest => dest.PhoneNumber, src => src.PhoneNumber ?? string.Empty)
             .Map(dest => dest.EmailConfirmed, src => src.EmailConfirmed);
 
+        // Comment mapping
+        TypeAdapterConfig<Comment, CommentModel>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.CommentText, src => src.CommentText)
+            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
+            .Map(dest => dest.EntityType, src => src.EntityType)
+            .Map(dest => dest.CreatedBy, src => src.CreatedBy)
+            .Map(dest => dest.EntityId, src => GetEntityId(src));
+
+        TypeAdapterConfig<CommentModel, Comment>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.CommentText, src => src.CommentText)
+            .Map(dest => dest.CreatedAt, src => src.CreatedAt)
+            .Map(dest => dest.EntityType, src => src.EntityType)
+            .Map(dest => dest.CreatedBy, src => src.CreatedBy)
+            .AfterMapping((src, dest) =>
+            {
+                switch (src.EntityType)
+                {
+                    case "SpsaCase":
+                        dest.SpsaCaseId = src.EntityId;
+                        break;
+                    case "Student":
+                        dest.StudentId = src.EntityId;
+                        break;
+                    case "TeacherPayment":
+                        dest.TeacherPaymentId = src.EntityId;
+                        break;
+                    case "StudentPayment":
+                        dest.StudentPaymentId = src.EntityId;
+                        break;
+                    case "OpkvalSupervision":
+                        dest.OpkvalSupervisionId = src.EntityId;
+                        break;
+                }
+            });
+
         // Student mapping
         TypeAdapterConfig<Student, StudentModel>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.StudentNumber, src => src.StudentNumber)
             .Map(dest => dest.CPRNumber, src => src.CPRNumber)
             .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.FinishedDate, src => src.FinishedDate)
             .Map(dest => dest.StartPeriodId, src => src.StartPeriodId)
             .Map(dest => dest.EducationId, src => src.EducationId);
@@ -38,7 +75,7 @@ public static class MappingConfig
             .Map(dest => dest.StudentNumber, src => src.StudentNumber)
             .Map(dest => dest.CPRNumber, src => src.CPRNumber)
             .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.FinishedDate, src => src.FinishedDate)
             .Map(dest => dest.StartPeriodId, src => src.StartPeriodId)
             .Map(dest => dest.EducationId, src => src.EducationId);
@@ -49,7 +86,7 @@ public static class MappingConfig
             .Map(dest => dest.SpsaCaseNumber, src => src.SpsaCaseNumber)
             .Map(dest => dest.HoursSought, src => src.HoursSought)
             .Map(dest => dest.HoursSpent, src => src.HoursSpent)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.IsActive, src => src.IsActive)
             .Map(dest => dest.ApplicationDate, src => src.ApplicationDate)
             .Map(dest => dest.LatestReapplicationDate, src => src.LatestReapplicationDate)
@@ -62,7 +99,7 @@ public static class MappingConfig
             .Map(dest => dest.SpsaCaseNumber, src => src.SpsaCaseNumber)
             .Map(dest => dest.HoursSought, src => src.HoursSought)
             .Map(dest => dest.HoursSpent, src => src.HoursSpent)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.IsActive, src => src.IsActive)
             .Map(dest => dest.ApplicationDate, src => src.ApplicationDate)
             .Map(dest => dest.LatestReapplicationDate, src => src.LatestReapplicationDate)
@@ -88,7 +125,7 @@ public static class MappingConfig
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Date, src => src.Date)
             .Map(dest => dest.AccountNumber, src => src.AccountNumber)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.Amount, src => src.Amount)
             .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
             .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
@@ -97,7 +134,7 @@ public static class MappingConfig
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Date, src => src.Date)
             .Map(dest => dest.AccountNumber, src => src.AccountNumber)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.Amount, src => src.Amount)
             .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
             .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
@@ -107,7 +144,7 @@ public static class MappingConfig
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Date, src => src.Date)
             .Map(dest => dest.Amount, src => src.Amount)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
             .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
 
@@ -115,7 +152,7 @@ public static class MappingConfig
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Date, src => src.Date)
             .Map(dest => dest.Amount, src => src.Amount)
-            .Map(dest => dest.Comment, src => src.Comment)
+            .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
             .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
 
@@ -160,5 +197,24 @@ public static class MappingConfig
         TypeAdapterConfig<PeriodModel, Period>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Name, src => src.Name);
+    }
+
+    private static Guid GetEntityId(Comment src)
+    {
+        switch (src.EntityType)
+        {
+            case "SpsaCase":
+                return src.SpsaCaseId ?? Guid.Empty;
+            case "Student":
+                return src.StudentId ?? Guid.Empty;
+            case "TeacherPayment":
+                return src.TeacherPaymentId ?? Guid.Empty;
+            case "StudentPayment":
+                return src.StudentPaymentId ?? Guid.Empty;
+            case "OpkvalSupervision":
+                return src.OpkvalSupervisionId ?? Guid.Empty;
+            default:
+                return Guid.Empty;
+        }
     }
 }

@@ -26,13 +26,10 @@ namespace sps.DAL.Configurations
                 .HasConversion(new EncryptedCPRNumberConverter(_encryptionService))
                 .IsRequired();
 
-            // Configure encrypted Name and Comment
+            // Configure encrypted Name
             builder.Property(s => s.Name)
                 .UseEncryption(_encryptionService)
                 .IsRequired();
-
-            builder.Property(s => s.Comment)
-                .UseEncryption(_encryptionService);
 
             // Navigation properties configuration
             builder.HasOne(s => s.StartPeriod)
@@ -47,7 +44,8 @@ namespace sps.DAL.Configurations
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasMany(s => s.SpsaCases)
+            // Configure relationship with Comments
+            builder.HasMany(s => s.Comments)
                 .WithOne(c => c.Student)
                 .HasForeignKey(c => c.StudentId)
                 .OnDelete(DeleteBehavior.Cascade);

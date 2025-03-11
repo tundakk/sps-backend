@@ -1,4 +1,6 @@
-﻿using sps.Domain.Model.ValueObjects;
+﻿using System;
+using System.Collections.Generic;
+using sps.Domain.Model.ValueObjects;
 
 namespace sps.Domain.Model.Entities
 {
@@ -7,7 +9,7 @@ namespace sps.Domain.Model.Entities
         public Student()
         {
             SpsaCases = new HashSet<SpsaCase>();
-            Comments = new HashSet<StudentComment>();
+            Comments = new HashSet<Comment>();
         }
 
         public Guid Id { get; set; }
@@ -24,6 +26,6 @@ namespace sps.Domain.Model.Entities
         public Education? Education { get; set; }
 
         public ICollection<SpsaCase> SpsaCases { get; init; }
-        public ICollection<StudentComment> Comments { get; init; }
+        public ICollection<Comment> Comments { get; init; }
     }
 }

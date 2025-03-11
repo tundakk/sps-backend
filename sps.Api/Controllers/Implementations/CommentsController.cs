@@ -1,219 +1,82 @@
-using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
-using sps.Domain.Model.Dtos.OpkvalSupervision;
-using sps.Domain.Model.Dtos.SpsaCase;
-using sps.Domain.Model.Dtos.Student;
-using sps.Domain.Model.Dtos.StudentPayment;
-using sps.Domain.Model.Dtos.TeacherPayment;
+using sps.Domain.Model.Models;
+using System;
+using System.Threading.Tasks;
 
 namespace sps.API.Controllers.Implementations
 {
-    public class CommentsController : ApiControllerBase
+    /// <summary>
+    /// Controller for managing comments.
+    /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CommentsController : BaseController<CommentsController>
     {
         private readonly ICommentService _commentService;
 
-        public CommentsController(ICommentService commentService)
+        /// <summary>
+        /// Constructor for the CommentsController.
+        /// </summary>
+        /// <param name="commentService">The comment service</param>
+        /// <param name="logger">The logger</param>
+        public CommentsController(ICommentService commentService, ILogger<CommentsController> logger)
+            : base(logger)
         {
             _commentService = commentService;
         }
 
-        #region SPSA Case Comments
-
-        [HttpPost("spsacase")]
-        [ProducesResponseType(typeof(SpsaCaseCommentDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddSpsaCaseComment([FromBody] AddSpsaCaseCommentDto commentDto)
+        /// <summary>
+        /// Adds a comment to an entity
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> AddCommentAsync([FromBody] CommentModel comment)
         {
             try
             {
-                var result = await _commentService.AddSpsaCaseCommentAsync(commentDto);
-                return CreatedAtAction(nameof(AddSpsaCaseComment), result);
+                var result = await _commentService.AddCommentAsync(comment);
+                return ProcessResponse(result);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error adding comment to SPSA case");
+                return HandleError(ex);
             }
         }
 
-        [HttpDelete("spsacase/{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteSpsaCaseComment(Guid id)
-        {
-            var deleted = await _commentService.DeleteSpsaCaseCommentAsync(id);
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
-        }
-
-        #endregion
-
-        #region Student Comments
-
-        [HttpPost("student")]
-        [ProducesResponseType(typeof(StudentCommentDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddStudentComment([FromBody] AddStudentCommentDto commentDto)
+        /// <summary>
+        /// Gets comments for a specific entity
+        /// </summary>
+        [HttpGet("{entityType}/{entityId}")]
+        public async Task<IActionResult> GetCommentsByEntityAsync(string entityType, Guid entityId)
         {
             try
             {
-                var result = await _commentService.AddStudentCommentAsync(commentDto);
-                return CreatedAtAction(nameof(AddStudentComment), result);
+                var result = await _commentService.GetCommentsByEntityAsync(entityType, entityId);
+                return ProcessResponse(result);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error adding comment to student");
+                return HandleError(ex);
             }
         }
 
-        [HttpDelete("student/{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteStudentComment(Guid id)
-        {
-            var deleted = await _commentService.DeleteStudentCommentAsync(id);
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
-        }
-
-        #endregion
-
-        #region Teacher Payment Comments
-
-        [HttpPost("teacherpayment")]
-        [ProducesResponseType(typeof(TeacherPaymentCommentDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddTeacherPaymentComment([FromBody] AddTeacherPaymentCommentDto commentDto)
+        /// <summary>
+        /// Deletes a comment
+        /// </summary>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCommentAsync(Guid id)
         {
             try
             {
-                var result = await _commentService.AddTeacherPaymentCommentAsync(commentDto);
-                return CreatedAtAction(nameof(AddTeacherPaymentComment), result);
+                var result = await _commentService.DeleteCommentAsync(id);
+                return result ? NoContent() : NotFound();
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error adding comment to teacher payment");
+                return HandleError(ex);
             }
         }
-
-        [HttpDelete("teacherpayment/{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteTeacherPaymentComment(Guid id)
-        {
-            var deleted = await _commentService.DeleteTeacherPaymentCommentAsync(id);
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
-        }
-
-        #endregion
-
-        #region Student Payment Comments
-
-        [HttpPost("studentpayment")]
-        [ProducesResponseType(typeof(StudentPaymentCommentDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddStudentPaymentComment([FromBody] AddStudentPaymentCommentDto commentDto)
-        {
-            try
-            {
-                var result = await _commentService.AddStudentPaymentCommentAsync(commentDto);
-                return CreatedAtAction(nameof(AddStudentPaymentComment), result);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error adding comment to student payment");
-            }
-        }
-
-        [HttpDelete("studentpayment/{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteStudentPaymentComment(Guid id)
-        {
-            var deleted = await _commentService.DeleteStudentPaymentCommentAsync(id);
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
-        }
-
-        #endregion
-
-        #region Opkval Supervision Comments
-
-        [HttpPost("opkvalsupervision")]
-        [ProducesResponseType(typeof(OpkvalSupervisionCommentDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddOpkvalSupervisionComment([FromBody] AddOpkvalSupervisionCommentDto commentDto)
-        {
-            try
-            {
-                var result = await _commentService.AddOpkvalSupervisionCommentAsync(commentDto);
-                return CreatedAtAction(nameof(AddOpkvalSupervisionComment), result);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error adding comment to supervision");
-            }
-        }
-
-        [HttpDelete("opkvalsupervision/{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteOpkvalSupervisionComment(Guid id)
-        {
-            var deleted = await _commentService.DeleteOpkvalSupervisionCommentAsync(id);
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
-        }
-
-        #endregion
     }
 }

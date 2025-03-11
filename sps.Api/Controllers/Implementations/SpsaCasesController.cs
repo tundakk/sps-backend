@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
-using sps.Domain.Model.Dtos.SpsaCase;
-using Mapster;
 using sps.Domain.Model.Models;
 using sps.Domain.Model.Responses;
 
@@ -37,8 +35,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _spsaCaseService.GetAllAsync();
-                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<SpsaCaseDto>>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -56,8 +53,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _spsaCaseService.GetByIdAsync(id);
-                var dtoResponse = response.Adapt<ServiceResponse<SpsaCaseDetailDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -68,17 +64,15 @@ namespace sps.API.Controllers.Implementations
         /// <summary>
         /// Creates a new SPSA case.
         /// </summary>
-        /// <param name="createDto">The SPSA case details.</param>
+        /// <param name="model">The SPSA case details.</param>
         [HttpPost]
-        public async Task<IActionResult> CreateAsync([FromBody] CreateSpsaCaseDto createDto)
+        public async Task<IActionResult> CreateAsync([FromBody] SpsaCaseModel model)
         {
             try
             {
-                var model = createDto.Adapt<SpsaCaseModel>();
                 var response = await _spsaCaseService.InsertAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<SpsaCaseDto>>();
-                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
-                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
+                return CreatedResponse(response, nameof(GetByIdAsync), 
+                    new { id = response.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -90,21 +84,19 @@ namespace sps.API.Controllers.Implementations
         /// Updates an existing SPSA case.
         /// </summary>
         /// <param name="id">The ID of the SPSA case to update.</param>
-        /// <param name="updateDto">The updated SPSA case details.</param>
+        /// <param name="model">The updated SPSA case details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateSpsaCaseDto updateDto)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] SpsaCaseModel model)
         {
             try
             {
-                if (id != updateDto.Id)
+                if (id != model.Id)
                 {
                     return BadRequest("ID mismatch between URL and body");
                 }
 
-                var model = updateDto.Adapt<SpsaCaseModel>();
                 var response = await _spsaCaseService.UpdateAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<SpsaCaseDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -139,9 +131,14 @@ namespace sps.API.Controllers.Implementations
         {
             try
             {
-                var response = await _spsaCaseService.GetByStudentIdAsync(studentId);
-                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<SpsaCaseDto>>>();
-                return ProcessResponse(dtoResponse);
+                var response = await _spsaCaseService.GetAllAsync();
+                // Filter the results to only include cases for this student
+                if (response.Success)
+                {
+                    var filteredData = response.Data?.Where(c => c.StudentId == studentId).ToList() ?? new List<SpsaCaseModel>();
+                    response = ServiceResponse<IEnumerable<SpsaCaseModel>>.CreateSuccess(filteredData);
+                }
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {

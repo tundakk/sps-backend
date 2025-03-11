@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
-using sps.Domain.Model.Dtos.Period;
 using sps.Domain.Model.Models;
 using Mapster;
 using sps.Domain.Model.Responses;
@@ -37,8 +36,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _periodService.GetAllAsync();
-                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<PeriodDto>>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -56,8 +54,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _periodService.GetByIdAsync(id);
-                var dtoResponse = response.Adapt<ServiceResponse<PeriodDetailDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -68,17 +65,15 @@ namespace sps.API.Controllers.Implementations
         /// <summary>
         /// Creates a new period.
         /// </summary>
-        /// <param name="createDto">The period details.</param>
+        /// <param name="model">The period details.</param>
         [HttpPost]
-        public async Task<IActionResult> CreateAsync([FromBody] CreatePeriodDto createDto)
+        public async Task<IActionResult> CreateAsync([FromBody] PeriodModel model)
         {
             try
             {
-                var model = createDto.Adapt<PeriodModel>();
                 var response = await _periodService.InsertAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<PeriodDto>>();
-                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
-                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
+                return CreatedResponse(response, nameof(GetByIdAsync), 
+                    new { id = response.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -90,21 +85,19 @@ namespace sps.API.Controllers.Implementations
         /// Updates an existing period.
         /// </summary>
         /// <param name="id">The ID of the period to update.</param>
-        /// <param name="updateDto">The updated period details.</param>
+        /// <param name="model">The updated period details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdatePeriodDto updateDto)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] PeriodModel model)
         {
             try
             {
-                if (id != updateDto.Id)
+                if (id != model.Id)
                 {
                     return BadRequest("ID mismatch between URL and body");
                 }
 
-                var model = updateDto.Adapt<PeriodModel>();
                 var response = await _periodService.UpdateAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<PeriodDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -140,13 +133,13 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _periodService.GetByIdAsync(id);
-                if (!response.Success)
+                if (!response.Success || response.Data == null)
                 {
                     return ProcessResponse(response);
                 }
 
-                var detailDto = response.Data.Adapt<PeriodDetailDto>();
-                return Ok(detailDto.EducationRates);
+                var period = response.Data;
+                return Ok(period.EducationPeriodRates);
             }
             catch (Exception ex)
             {
@@ -164,13 +157,13 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _periodService.GetByIdAsync(id);
-                if (!response.Success)
+                if (!response.Success || response.Data == null)
                 {
                     return ProcessResponse(response);
                 }
 
-                var detailDto = response.Data.Adapt<PeriodDetailDto>();
-                return Ok(detailDto.Cases);
+                var period = response.Data;
+                return Ok(period.SpsaCases);
             }
             catch (Exception ex)
             {

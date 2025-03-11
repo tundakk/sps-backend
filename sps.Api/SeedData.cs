@@ -1,4 +1,5 @@
 ﻿// SeedData.cs
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using sps.DAL.DataModel;
@@ -332,64 +333,80 @@ namespace sps.API
             return teachers;
         }
 
-        private static async Task<List<Student>> SeedStudentsAsync(SpsDbContext context, List<Education> educations, List<Period> periods)
+      private static async Task<List<Student>> SeedStudentsAsync(SpsDbContext context, List<Education> educations, List<Period> periods)
+{
+    if (await context.Students.AnyAsync())
+    {
+        return await context.Students.ToListAsync();
+    }
+
+    var students = new List<Student>
+    {
+        new()
         {
-            if (await context.Students.AnyAsync())
+            Id = Guid.NewGuid(),
+            StudentNumber = "S10001",
+            CPRNumber = new CPRNumber("111111-1111"),
+            Name = new SensitiveString("Alex Johnson"),
+            Comments = new List<Comment> 
             {
-                return await context.Students.ToListAsync();
-            }
-
-            var students = new List<Student>
-            {
-                new()
+                new Comment
                 {
                     Id = Guid.NewGuid(),
-                    StudentNumber = "S10001",
-                    CPRNumber = new CPRNumber("111111-1111"),
-                    Name = new SensitiveString("Alex Johnson"),
-                    Comment = new SensitiveString("Regular progress reviews needed"),
-                    EducationId = educations[0].Id,
-                    StartPeriodId = periods[0].Id
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    StudentNumber = "S10002",
-                    CPRNumber = new CPRNumber("222222-2222"),
-                    Name = new SensitiveString("Sam Williams"),
-                    Comment = null,
-                    EducationId = educations[1].Id,
-                    StartPeriodId = periods[0].Id
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    StudentNumber = "S10003",
-                    CPRNumber = new CPRNumber("333333-3333"),
-                    Name = new SensitiveString("Taylor Brown"),
-                    Comment = new SensitiveString("Requires extended time for assessments"),
-                    EducationId = educations[2].Id,
-                    StartPeriodId = periods[1].Id
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    StudentNumber = "S10004",
-                    CPRNumber = new CPRNumber("444444-4444"),
-                    Name = new SensitiveString("Jordan Smith"),
-                    Comment = null,
-                    EducationId = educations[3].Id,
-                    StartPeriodId = periods[1].Id,
-                    FinishedDate = DateTime.UtcNow.AddMonths(3)
+                    CommentText = new SensitiveString("Regular progress reviews needed"),
+                    EntityType = "Student",
+                    CreatedAt = DateTime.UtcNow
                 }
-            };
-
-            await context.Students.AddRangeAsync(students);
-            await context.SaveChangesAsync();
-            return students;
+            },
+            EducationId = educations[0].Id,
+            StartPeriodId = periods[0].Id
+        },
+        new()
+        {
+            Id = Guid.NewGuid(),
+            StudentNumber = "S10002",
+            CPRNumber = new CPRNumber("222222-2222"),
+            Name = new SensitiveString("Sam Williams"),
+            Comments = new List<Comment>(),
+            EducationId = educations[1].Id,
+            StartPeriodId = periods[0].Id
+        },
+        new()
+        {
+            Id = Guid.NewGuid(),
+            StudentNumber = "S10003",
+            CPRNumber = new CPRNumber("333333-3333"),
+            Name = new SensitiveString("Taylor Brown"),
+            Comments = new List<Comment> 
+            {
+                new Comment
+                {
+                    Id = Guid.NewGuid(),
+                    CommentText = new SensitiveString("Requires extended time for assessments"),
+                    EntityType = "Student",
+                    CreatedAt = DateTime.UtcNow
+                }
+            },
+            EducationId = educations[2].Id,
+            StartPeriodId = periods[1].Id
+        },
+        new()
+        {
+            Id = Guid.NewGuid(),
+            StudentNumber = "S10004",
+            CPRNumber = new CPRNumber("444444-4444"),
+            Name = new SensitiveString("Jordan Smith"),
+            Comments = new List<Comment>(),
+            EducationId = educations[3].Id,
+            StartPeriodId = periods[1].Id,
+            FinishedDate = DateTime.UtcNow.AddMonths(3)
         }
+    };
 
-        private static async Task<List<OpkvalSupervision>> SeedOpkvalSupervisionsAsync(SpsDbContext context)
+    await context.Students.AddRangeAsync(students);
+    await context.SaveChangesAsync();
+    return students;
+}        private static async Task<List<OpkvalSupervision>> SeedOpkvalSupervisionsAsync(SpsDbContext context)
         {
             if (await context.OpkvalSupervisions.AnyAsync())
             {
@@ -398,105 +415,141 @@ namespace sps.API
 
             var supervisions = new List<OpkvalSupervision>
             {
-                new() { Id = Guid.NewGuid(), Status = "Planned" },
-                new() { Id = Guid.NewGuid(), Status = "In Progress" },
-                new() { Id = Guid.NewGuid(), Status = "Completed" },
-                new() { Id = Guid.NewGuid(), Status = "Cancelled", }
+                new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.Godkendt },
+                new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.StuderendeGiveSamtykke },
+                new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.AfventerSTUK },
+                new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.AnulleretSTUK }
             };
 
             await context.OpkvalSupervisions.AddRangeAsync(supervisions);
             await context.SaveChangesAsync();
             return supervisions;
         }
+private static async Task<List<TeacherPayment>> SeedTeacherPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
+{
+    if (await context.TeacherPayments.AnyAsync())
+    {
+        return await context.TeacherPayments.ToListAsync();
+    }
 
-        private static async Task<List<TeacherPayment>> SeedTeacherPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
+    var payments = new List<TeacherPayment>
+    {
+        new()
         {
-            if (await context.TeacherPayments.AnyAsync())
+            Id = Guid.NewGuid(),
+            Date = DateTime.UtcNow.AddDays(-30),
+            Comments = new List<Comment>
             {
-                return await context.TeacherPayments.ToListAsync();
-            }
-
-            var payments = new List<TeacherPayment>
-            {
-                new()
+                new Comment
                 {
                     Id = Guid.NewGuid(),
-                    Date = DateTime.UtcNow.AddDays(-30),
-                    Comment = new SensitiveString("Monthly payment"),
-                    Amount = 2500.00m,
-                    ExternalVoucherNumber = "VP-001",
-                    SupportTypeId = supportTypes[0].Id
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    Date = DateTime.UtcNow.AddDays(-15),
-                    Comment = null,
-                    Amount = 1800.50m,
-                    ExternalVoucherNumber = "VP-002",
-                    SupportTypeId = supportTypes[1].Id
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    Date = DateTime.UtcNow.AddDays(-5),
-                    Comment = new SensitiveString("Special tutorial sessions"),
-                    Amount = 1200.75m,
-                    ExternalVoucherNumber = "VP-003",
-                    SupportTypeId = supportTypes[2].Id
+                    CommentText = new SensitiveString("Monthly payment"),
+                    EntityType = "TeacherPayment",
+                    CreatedAt = DateTime.UtcNow.AddDays(-30)
                 }
-            };
-
-            await context.TeacherPayments.AddRangeAsync(payments);
-            await context.SaveChangesAsync();
-            return payments;
-        }
-
-        private static async Task<List<StudentPayment>> SeedStudentPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
+            },
+            Amount = 2500.00m,
+            ExternalVoucherNumber = "VP-001",
+            SupportTypeId = supportTypes[0].Id
+        },
+        new()
         {
-            if (await context.StudentPayments.AnyAsync())
+            Id = Guid.NewGuid(),
+            Date = DateTime.UtcNow.AddDays(-15),
+            Comments = new List<Comment>(),
+            Amount = 1800.50m,
+            ExternalVoucherNumber = "VP-002",
+            SupportTypeId = supportTypes[1].Id
+        },
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Date = DateTime.UtcNow.AddDays(-5),
+            Comments = new List<Comment>
             {
-                return await context.StudentPayments.ToListAsync();
-            }
-
-            var payments = new List<StudentPayment>
-            {
-                new()
+                new Comment
                 {
                     Id = Guid.NewGuid(),
-                    Date = DateTime.UtcNow.AddDays(-45),
-                    AccountNumber = new SensitiveString("9876-5432"),
-                    Comment = new SensitiveString("Financial aid payment"),
-                    Amount = 1200.00m,
-                    ExternalVoucherNumber = "SP-001",
-                    SupportTypeId = supportTypes[0].Id
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    Date = DateTime.UtcNow.AddDays(-25),
-                    AccountNumber = new SensitiveString("8765-4321"),
-                    Comment = null,
-                    Amount = 950.50m,
-                    ExternalVoucherNumber = "SP-002",
-                    SupportTypeId = supportTypes[1].Id
-                },
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    Date = DateTime.UtcNow.AddDays(-10),
-                    AccountNumber = new SensitiveString("7654-3210"),
-                    Comment = new SensitiveString("Materials allowance"),
-                    Amount = 500.25m,
-                    ExternalVoucherNumber = "SP-003",
-                    SupportTypeId = supportTypes[2].Id
+                    CommentText = new SensitiveString("Special tutorial sessions"),
+                    EntityType = "TeacherPayment",
+                    CreatedAt = DateTime.UtcNow.AddDays(-5)
                 }
-            };
-
-            await context.StudentPayments.AddRangeAsync(payments);
-            await context.SaveChangesAsync();
-            return payments;
+            },
+            Amount = 1200.75m,
+            ExternalVoucherNumber = "VP-003",
+            SupportTypeId = supportTypes[2].Id
         }
+    };
+
+    await context.TeacherPayments.AddRangeAsync(payments);
+    await context.SaveChangesAsync();
+    return payments;
+}
+
+
+       private static async Task<List<StudentPayment>> SeedStudentPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
+{
+    if (await context.StudentPayments.AnyAsync())
+    {
+        return await context.StudentPayments.ToListAsync();
+    }
+
+    var payments = new List<StudentPayment>
+    {
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Date = DateTime.UtcNow.AddDays(-45),
+            AccountNumber = new SensitiveString("9876-5432"),
+            Comments = new List<Comment>
+            {
+                new Comment
+                {
+                    Id = Guid.NewGuid(),
+                    CommentText = new SensitiveString("Financial aid payment"),
+                    EntityType = "StudentPayment",
+                    CreatedAt = DateTime.UtcNow.AddDays(-45)
+                }
+            },
+            Amount = 1200.00m,
+            ExternalVoucherNumber = "SP-001",
+            SupportTypeId = supportTypes[0].Id
+        },
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Date = DateTime.UtcNow.AddDays(-25),
+            AccountNumber = new SensitiveString("8765-4321"),
+            Comments = new List<Comment>(),
+            Amount = 950.50m,
+            ExternalVoucherNumber = "SP-002",
+            SupportTypeId = supportTypes[1].Id
+        },
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Date = DateTime.UtcNow.AddDays(-10),
+            AccountNumber = new SensitiveString("7654-3210"),
+            Comments = new List<Comment>
+            {
+                new Comment
+                {
+                    Id = Guid.NewGuid(),
+                    CommentText = new SensitiveString("Materials allowance"),
+                    EntityType = "StudentPayment",
+                    CreatedAt = DateTime.UtcNow.AddDays(-10)
+                }
+            },
+            Amount = 500.25m,
+            ExternalVoucherNumber = "SP-003",
+            SupportTypeId = supportTypes[2].Id
+        }
+    };
+
+    await context.StudentPayments.AddRangeAsync(payments);
+    await context.SaveChangesAsync();
+    return payments;
+}
 
         private static async Task<List<SpsaCase>> SeedSpsaCasesAsync(
             SpsDbContext context,
@@ -518,20 +571,30 @@ namespace sps.API
 
             var cases = new List<SpsaCase>
             {
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    SpsaCaseNumber = "SC-2023-001",
-                    HoursSought = 30,
-                    HoursSpent = 25,
-                    Comment = "Progress is being made, further hours may be needed",
-                    IsActive = true,
-                    ApplicationDate = DateTime.UtcNow.AddMonths(-3),
-                    LatestReapplicationDate = DateTime.UtcNow.AddMonths(-1),
-                    StudentId = students[0].Id,
-                    SupportingTeacherId = teachers[0].Id,
-                    AppliedPeriodId = periods[0].Id,
-                    DiagnosisId = diagnoses[0].Id,
+               new()
+{
+    Id = Guid.NewGuid(),
+    SpsaCaseNumber = "SC-2023-001",
+    HoursSought = 30,
+    HoursSpent = 25,
+    Comments = new List<Comment>
+    {
+        new Comment
+        {
+            Id = Guid.NewGuid(),
+            CommentText = new SensitiveString("Progress is being made, further hours may be needed"),
+            EntityType = "SpsaCase",
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        }
+    },
+    IsActive = true,
+    ApplicationDate = DateTime.UtcNow.AddMonths(-3),
+    LatestReapplicationDate = DateTime.UtcNow.AddMonths(-1),
+    StudentId = students[0].Id,
+    Student = students[0], // Add this line
+    SupportingTeacherId = teachers[0].Id,
+    AppliedPeriodId = periods[0].Id,
+    DiagnosisId = diagnoses[0].Id,
                     EduCategoryId = eduCategories[0].Id,
                     SupportTypeId = supportTypes[0].Id,
                     EduStatusId = eduStatuses[0].Id,
@@ -545,11 +608,21 @@ namespace sps.API
                     SpsaCaseNumber = "SC-2023-002",
                     HoursSought = 25,
                     HoursSpent = 12,
-                    Comment = "Making good progress",
+                      Comments = new List<Comment>
+    {
+        new Comment
+        {
+            Id = Guid.NewGuid(),
+            CommentText = new SensitiveString("Making good progress"),
+            EntityType = "SpsaCase",
+            CreatedAt = DateTime.UtcNow.AddMonths(-2)
+        }
+    },
                     IsActive = true,
                     ApplicationDate = DateTime.UtcNow.AddMonths(-2),
                     LatestReapplicationDate = null,
                     StudentId = students[1].Id,
+                    Student = students[1], // Add this line
                     SupportingTeacherId = teachers[1].Id,
                     AppliedPeriodId = periods[1].Id,
                     DiagnosisId = diagnoses[1].Id,
@@ -566,11 +639,21 @@ namespace sps.API
                     SpsaCaseNumber = "SC-2023-003",
                     HoursSought = 40,
                     HoursSpent = 40,
-                    Comment = "Support completed successfully",
+                     Comments = new List<Comment>
+    {
+        new Comment
+        {
+            Id = Guid.NewGuid(),
+            CommentText = new SensitiveString("Support completed successfully"),
+            EntityType = "SpsaCase",
+            CreatedAt = DateTime.UtcNow.AddMonths(-5)
+        }
+    },
                     IsActive = false,
                     ApplicationDate = DateTime.UtcNow.AddMonths(-5),
                     LatestReapplicationDate = DateTime.UtcNow.AddMonths(-2),
                     StudentId = students[2].Id,
+                    Student = students[2],
                     SupportingTeacherId = teachers[2].Id,
                     AppliedPeriodId = periods[0].Id,
                     DiagnosisId = diagnoses[2].Id,

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using sps.API;
 using sps.API.Middleware;
-using sps.API.Mappings;
 using sps.BLL;
 using sps.BLL.Services.Implementations;
 using sps.Domain.Model.Services;
@@ -15,21 +14,17 @@ builder.Services.AddControllers();
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
 builder.Services.AddScoped<IEncryptionService, AESEncryptionService>();
 
-// Add semantic kernel
-
-//builder.Services.AddSemanticKernel(); // Register Semantic Kernel services
 // Register Mapster mappings
 MappingConfig.RegisterMappings();
-DtoMappingConfig.RegisterDtoMappings();
 
-////LOGGING
+// LOGGING
 //builder.Logging.ClearProviders();
 //builder.Logging.AddConsole();
 
 //builder.Logging.SetMinimumLevel(LogLevel.Error);
 //builder.WebHost.CaptureStartupErrors(true).UseSetting("detailedErrors", "true");
-// Configure Swagger
 
+// Configure Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "sps API", Version = "v1" });
@@ -126,7 +121,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// If you have identity endpoints, make sure to map them
+// Update the Identity endpoints mapping to use the correct type
 app.MapIdentityApi<IdentityUser<Guid>>();
 
+app.MapPost("/register", () => Results.NotFound("Registration is disabled."))
+    .ExcludeFromDescription(); // Prevent swagger from processing this endpoint
 app.Run();

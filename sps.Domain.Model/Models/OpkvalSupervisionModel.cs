@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using sps.Domain.Model.Entities;
 
 namespace sps.Domain.Model.Models
 {
@@ -9,7 +10,7 @@ namespace sps.Domain.Model.Models
         public OpkvalSupervisionModel()
         {
             SpsaCases = new HashSet<SpsaCaseModel>();
-            Comments = new HashSet<OpkvalSupervisionCommentModel>();
+            Comments = new HashSet<Comment>();
         }
 
         [Key]
@@ -27,6 +28,6 @@ namespace sps.Domain.Model.Models
         public string Status { get; set; }
         
         public ICollection<SpsaCaseModel> SpsaCases { get; set; }
-        public ICollection<OpkvalSupervisionCommentModel> Comments { get; init; }
+        public ICollection<Comment> Comments { get; init; }
     }
 }

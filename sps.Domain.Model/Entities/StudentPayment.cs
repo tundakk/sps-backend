@@ -9,7 +9,7 @@ namespace sps.Domain.Model.Entities
         public StudentPayment()
         {
             SpsaCases = new HashSet<SpsaCase>();
-            Comments = new HashSet<StudentPaymentComment>();
+            Comments = new HashSet<Comment>();
         }
 
         public Guid Id { get; set; }
@@ -24,6 +24,6 @@ namespace sps.Domain.Model.Entities
         public SupportType? SupportType { get; set; }
         
         public ICollection<SpsaCase> SpsaCases { get; init; }
-        public ICollection<StudentPaymentComment> Comments { get; init; }
+        public ICollection<Comment> Comments { get; init; }
     }
 }

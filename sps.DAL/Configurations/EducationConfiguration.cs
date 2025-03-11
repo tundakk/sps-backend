@@ -15,7 +15,7 @@ namespace sps.DAL.Configurations
 
             // Configure relationships
             builder.HasOne(e => e.EduCategory)
-                .WithMany()
+                .WithMany(ec => ec.Educations)  // Specify the navigation property on EduCategory
                 .HasForeignKey(e => e.EduCategoryId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);

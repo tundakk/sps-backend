@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
-using sps.Domain.Model.Dtos.Diagnosis;
 using sps.Domain.Model.Models;
 using Mapster;
 using sps.Domain.Model.Responses;
@@ -37,8 +36,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _diagnosisService.GetAllAsync();
-                var dtoResponse = response.Adapt<ServiceResponse<IEnumerable<DiagnosisDto>>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -56,8 +54,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _diagnosisService.GetByIdAsync(id);
-                var dtoResponse = response.Adapt<ServiceResponse<DiagnosisDetailDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -68,17 +65,15 @@ namespace sps.API.Controllers.Implementations
         /// <summary>
         /// Creates a new diagnosis.
         /// </summary>
-        /// <param name="createDto">The diagnosis details.</param>
+        /// <param name="model">The diagnosis details.</param>
         [HttpPost]
-        public async Task<IActionResult> CreateAsync([FromBody] CreateDiagnosisDto createDto)
+        public async Task<IActionResult> CreateAsync([FromBody] DiagnosisModel model)
         {
             try
             {
-                var model = createDto.Adapt<DiagnosisModel>();
                 var response = await _diagnosisService.InsertAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<DiagnosisDto>>();
-                return CreatedResponse(dtoResponse, nameof(GetByIdAsync), 
-                    new { id = dtoResponse.Data?.Id ?? Guid.Empty });
+                return CreatedResponse(response, nameof(GetByIdAsync), 
+                    new { id = response.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
             {
@@ -90,21 +85,19 @@ namespace sps.API.Controllers.Implementations
         /// Updates an existing diagnosis.
         /// </summary>
         /// <param name="id">The ID of the diagnosis to update.</param>
-        /// <param name="updateDto">The updated diagnosis details.</param>
+        /// <param name="model">The updated diagnosis details.</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateDiagnosisDto updateDto)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] DiagnosisModel model)
         {
             try
             {
-                if (id != updateDto.Id)
+                if (id != model.Id)
                 {
                     return BadRequest("ID mismatch between URL and body");
                 }
 
-                var model = updateDto.Adapt<DiagnosisModel>();
                 var response = await _diagnosisService.UpdateAsync(model);
-                var dtoResponse = response.Adapt<ServiceResponse<DiagnosisDto>>();
-                return ProcessResponse(dtoResponse);
+                return ProcessResponse(response);
             }
             catch (Exception ex)
             {
@@ -140,13 +133,13 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _diagnosisService.GetByIdAsync(id);
-                if (!response.Success)
+                if (!response.Success || response.Data == null)
                 {
                     return ProcessResponse(response);
                 }
 
-                var detailDto = response.Data.Adapt<DiagnosisDetailDto>();
-                return Ok(detailDto.Cases);
+                var diagnosis = response.Data;
+                return Ok(diagnosis.SpsaCases);
             }
             catch (Exception ex)
             {

@@ -1,17 +1,15 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Mapster;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using sps.BLL.Services.Interfaces;
 using sps.DAL.DataModel;
-using sps.Domain.Model.Dtos.OpkvalSupervision;
-using sps.Domain.Model.Dtos.SpsaCase;
-using sps.Domain.Model.Dtos.Student;
-using sps.Domain.Model.Dtos.StudentPayment;
-using sps.Domain.Model.Dtos.TeacherPayment;
 using sps.Domain.Model.Entities;
+using sps.Domain.Model.Models;
+using sps.Domain.Model.Responses;
 using sps.Domain.Model.ValueObjects;
-using Microsoft.EntityFrameworkCore;
 
 namespace sps.BLL.Services.Implementations
 {
@@ -30,243 +28,152 @@ namespace sps.BLL.Services.Implementations
         }
 
         /// <inheritdoc />
-        public async Task<SpsaCaseCommentDto> AddSpsaCaseCommentAsync(AddSpsaCaseCommentDto commentDto)
+        public async Task<ServiceResponse<CommentModel>> AddCommentAsync(CommentModel commentModel)
         {
-            // Validate that the entity exists
-            var spsaCase = await _context.SpsaCases
-                .FirstOrDefaultAsync(c => c.Id == commentDto.SpsaCaseId);
-
-            if (spsaCase == null)
+            try
             {
-                _logger.LogWarning("Attempted to add comment to non-existent SPSA case with ID {SpsaCaseId}", commentDto.SpsaCaseId);
-                throw new ArgumentException($"SPSA case with ID {commentDto.SpsaCaseId} not found");
+                // Validate that the entity exists based on EntityType
+                if (!await EntityExistsAsync(commentModel.EntityType, commentModel.EntityId))
+                {
+                    _logger.LogWarning("Attempted to add comment to non-existent {EntityType} with ID {EntityId}", 
+                        commentModel.EntityType, commentModel.EntityId);
+                    return ServiceResponse<CommentModel>.CreateError($"{commentModel.EntityType} with ID {commentModel.EntityId} not found");
+                }
+
+                // Create and save the comment
+                var comment = new Comment
+                {
+                    CommentText = commentModel.CommentText,
+                    CreatedAt = DateTime.UtcNow,
+                    EntityType = commentModel.EntityType,
+                    CreatedBy = commentModel.CreatedBy
+                };
+
+                // Set the appropriate foreign key based on entity type
+                SetEntityReference(comment, commentModel.EntityType, commentModel.EntityId);
+
+                _context.Comments.Add(comment);
+                await _context.SaveChangesAsync();
+
+                // Return the created comment
+                commentModel.Id = comment.Id;
+                commentModel.CreatedAt = comment.CreatedAt;
+                return ServiceResponse<CommentModel>.CreateSuccess(commentModel);
             }
-
-            // Create and save the comment
-            var comment = new SpsaCaseComment
+            catch (Exception ex)
             {
-                CommentText = commentDto.CommentText,
-                CreatedAt = DateTime.UtcNow,
-                SpsaCaseId = commentDto.SpsaCaseId
-            };
-
-            _context.SpsaCaseComments.Add(comment);
-            await _context.SaveChangesAsync();
-
-            // Return the created comment
-            return new SpsaCaseCommentDto
-            {
-                Id = comment.Id,
-                CommentText = comment.CommentText,
-                CreatedAt = comment.CreatedAt
-            };
+                _logger.LogError(ex, "Error adding comment");
+                return ServiceResponse<CommentModel>.CreateError(ex.Message);
+            }
         }
 
         /// <inheritdoc />
-        public async Task<StudentCommentDto> AddStudentCommentAsync(AddStudentCommentDto commentDto)
+        public async Task<ServiceResponse<List<CommentModel>>> GetCommentsByEntityAsync(string entityType, Guid entityId)
         {
-            // Validate that the entity exists
-            var student = await _context.Students
-                .FirstOrDefaultAsync(c => c.Id == commentDto.StudentId);
-
-            if (student == null)
+            try
             {
-                _logger.LogWarning("Attempted to add comment to non-existent student with ID {StudentId}", commentDto.StudentId);
-                throw new ArgumentException($"Student with ID {commentDto.StudentId} not found");
+                var comments = await _context.Comments
+                    .Where(c => c.EntityType == entityType && GetEntityId(c, entityType) == entityId)
+                    .ToListAsync();
+
+                var commentModels = comments.Select(c => new CommentModel
+                {
+                    Id = c.Id,
+                    CommentText = c.CommentText,
+                    CreatedAt = c.CreatedAt,
+                    EntityType = c.EntityType,
+                    EntityId = entityId,
+                    CreatedBy = c.CreatedBy,
+                    // You may need to set EntityName if available
+                }).ToList();
+
+                return ServiceResponse<List<CommentModel>>.CreateSuccess(commentModels);
             }
-
-            // Create and save the comment
-            var comment = new StudentComment
+            catch (Exception ex)
             {
-                CommentText = new SensitiveString(commentDto.CommentText),
-                CreatedAt = DateTime.UtcNow,
-                StudentId = commentDto.StudentId
-            };
-
-            _context.StudentComments.Add(comment);
-            await _context.SaveChangesAsync();
-
-            // Return the created comment
-            return new StudentCommentDto
-            {
-                Id = comment.Id,
-                CommentText = comment.CommentText.Value,
-                CreatedAt = comment.CreatedAt
-            };
-        }
-
-        /// <inheritdoc />
-        public async Task<TeacherPaymentCommentDto> AddTeacherPaymentCommentAsync(AddTeacherPaymentCommentDto commentDto)
-        {
-            // Validate that the entity exists
-            var payment = await _context.TeacherPayments
-                .FirstOrDefaultAsync(c => c.Id == commentDto.TeacherPaymentId);
-
-            if (payment == null)
-            {
-                _logger.LogWarning("Attempted to add comment to non-existent teacher payment with ID {TeacherPaymentId}", commentDto.TeacherPaymentId);
-                throw new ArgumentException($"Teacher payment with ID {commentDto.TeacherPaymentId} not found");
+                _logger.LogError(ex, "Error retrieving comments for {EntityType} with ID {EntityId}", entityType, entityId);
+                return ServiceResponse<List<CommentModel>>.CreateError(ex.Message);
             }
-
-            // Create and save the comment
-            var comment = new TeacherPaymentComment
-            {
-                CommentText = new SensitiveString(commentDto.CommentText),
-                CreatedAt = DateTime.UtcNow,
-                TeacherPaymentId = commentDto.TeacherPaymentId
-            };
-
-            _context.TeacherPaymentComments.Add(comment);
-            await _context.SaveChangesAsync();
-
-            // Return the created comment
-            return new TeacherPaymentCommentDto
-            {
-                Id = comment.Id,
-                CommentText = comment.CommentText.Value,
-                CreatedAt = comment.CreatedAt
-            };
         }
-
+        
         /// <inheritdoc />
-        public async Task<StudentPaymentCommentDto> AddStudentPaymentCommentAsync(AddStudentPaymentCommentDto commentDto)
+        public async Task<bool> DeleteCommentAsync(Guid commentId)
         {
-            // Validate that the entity exists
-            var payment = await _context.StudentPayments
-                .FirstOrDefaultAsync(c => c.Id == commentDto.StudentPaymentId);
-
-            if (payment == null)
+            try
             {
-                _logger.LogWarning("Attempted to add comment to non-existent student payment with ID {StudentPaymentId}", commentDto.StudentPaymentId);
-                throw new ArgumentException($"Student payment with ID {commentDto.StudentPaymentId} not found");
+                var comment = await _context.Comments.FindAsync(commentId);
+                if (comment == null)
+                {
+                    _logger.LogWarning("Attempted to delete non-existent comment with ID {CommentId}", commentId);
+                    return false;
+                }
+
+                _context.Comments.Remove(comment);
+                await _context.SaveChangesAsync();
+                return true;
             }
-
-            // Create and save the comment
-            var comment = new StudentPaymentComment
+            catch (Exception ex)
             {
-                CommentText = new SensitiveString(commentDto.CommentText),
-                CreatedAt = DateTime.UtcNow,
-                StudentPaymentId = commentDto.StudentPaymentId
-            };
-
-            _context.StudentPaymentComments.Add(comment);
-            await _context.SaveChangesAsync();
-
-            // Return the created comment
-            return new StudentPaymentCommentDto
-            {
-                Id = comment.Id,
-                CommentText = comment.CommentText.Value,
-                CreatedAt = comment.CreatedAt
-            };
-        }
-
-        /// <inheritdoc />
-        public async Task<OpkvalSupervisionCommentDto> AddOpkvalSupervisionCommentAsync(AddOpkvalSupervisionCommentDto commentDto)
-        {
-            // Validate that the entity exists
-            var supervision = await _context.OpkvalSupervisions
-                .FirstOrDefaultAsync(c => c.Id == commentDto.OpkvalSupervisionId);
-
-            if (supervision == null)
-            {
-                _logger.LogWarning("Attempted to add comment to non-existent supervision with ID {OpkvalSupervisionId}", commentDto.OpkvalSupervisionId);
-                throw new ArgumentException($"Supervision with ID {commentDto.OpkvalSupervisionId} not found");
-            }
-
-            // Create and save the comment
-            var comment = new OpkvalSupervisionComment
-            {
-                CommentText = new SensitiveString(commentDto.CommentText),
-                CreatedAt = DateTime.UtcNow,
-                OpkvalSupervisionId = commentDto.OpkvalSupervisionId
-            };
-
-            _context.OpkvalSupervisionComments.Add(comment);
-            await _context.SaveChangesAsync();
-
-            // Return the created comment
-            return new OpkvalSupervisionCommentDto
-            {
-                Id = comment.Id,
-                CommentText = comment.CommentText.Value,
-                CreatedAt = comment.CreatedAt
-            };
-        }
-
-        /// <inheritdoc />
-        public async Task<bool> DeleteSpsaCaseCommentAsync(Guid commentId)
-        {
-            var comment = await _context.SpsaCaseComments.FindAsync(commentId);
-            if (comment == null)
-            {
-                _logger.LogWarning("Attempted to delete non-existent SPSA case comment with ID {CommentId}", commentId);
+                _logger.LogError(ex, "Error deleting comment with ID {CommentId}", commentId);
                 return false;
             }
-
-            _context.SpsaCaseComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
         }
 
-        /// <inheritdoc />
-        public async Task<bool> DeleteStudentCommentAsync(Guid commentId)
+        // Helper methods
+        private async Task<bool> EntityExistsAsync(string entityType, Guid entityId)
         {
-            var comment = await _context.StudentComments.FindAsync(commentId);
-            if (comment == null)
+            // Check if the referenced entity exists based on entity type
+            return entityType switch
             {
-                _logger.LogWarning("Attempted to delete non-existent student comment with ID {CommentId}", commentId);
-                return false;
-            }
-
-            _context.StudentComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
+                "SpsaCase" => await _context.SpsaCases.AnyAsync(s => s.Id == entityId),
+                "Student" => await _context.Students.AnyAsync(s => s.Id == entityId),
+                "TeacherPayment" => await _context.TeacherPayments.AnyAsync(t => t.Id == entityId),
+                "StudentPayment" => await _context.StudentPayments.AnyAsync(s => s.Id == entityId),
+                "OpkvalSupervision" => await _context.OpkvalSupervisions.AnyAsync(o => o.Id == entityId),
+                // Add more entity types as needed
+                _ => false
+            };
         }
 
-        /// <inheritdoc />
-        public async Task<bool> DeleteTeacherPaymentCommentAsync(Guid commentId)
+        private void SetEntityReference(Comment comment, string entityType, Guid entityId)
         {
-            var comment = await _context.TeacherPaymentComments.FindAsync(commentId);
-            if (comment == null)
+            // Set the appropriate foreign key based on entity type
+            switch (entityType)
             {
-                _logger.LogWarning("Attempted to delete non-existent teacher payment comment with ID {CommentId}", commentId);
-                return false;
+                case "SpsaCase":
+                    comment.SpsaCaseId = entityId;
+                    break;
+                case "Student":
+                    comment.StudentId = entityId;
+                    break;
+                case "TeacherPayment":
+                    comment.TeacherPaymentId = entityId;
+                    break;
+                case "StudentPayment":
+                    comment.StudentPaymentId = entityId;
+                    break;
+                case "OpkvalSupervision":
+                    comment.OpkvalSupervisionId = entityId;
+                    break;
+                // Add more entity types as needed
+                default:
+                    throw new ArgumentException($"Unsupported entity type: {entityType}");
             }
-
-            _context.TeacherPaymentComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
         }
 
-        /// <inheritdoc />
-        public async Task<bool> DeleteStudentPaymentCommentAsync(Guid commentId)
+        private Guid? GetEntityId(Comment comment, string entityType)
         {
-            var comment = await _context.StudentPaymentComments.FindAsync(commentId);
-            if (comment == null)
+            // Get the appropriate ID based on entity type
+            return entityType switch
             {
-                _logger.LogWarning("Attempted to delete non-existent student payment comment with ID {CommentId}", commentId);
-                return false;
-            }
-
-            _context.StudentPaymentComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        /// <inheritdoc />
-        public async Task<bool> DeleteOpkvalSupervisionCommentAsync(Guid commentId)
-        {
-            var comment = await _context.OpkvalSupervisionComments.FindAsync(commentId);
-            if (comment == null)
-            {
-                _logger.LogWarning("Attempted to delete non-existent supervision comment with ID {CommentId}", commentId);
-                return false;
-            }
-
-            _context.OpkvalSupervisionComments.Remove(comment);
-            await _context.SaveChangesAsync();
-            return true;
+                "SpsaCase" => comment.SpsaCaseId,
+                "Student" => comment.StudentId,
+                "TeacherPayment" => comment.TeacherPaymentId,
+                "StudentPayment" => comment.StudentPaymentId,
+                "OpkvalSupervision" => comment.OpkvalSupervisionId,
+                // Add more entity types as needed
+                _ => null
+            };
         }
     }
 }

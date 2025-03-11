@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using sps.Domain.Model.Entities;
 using sps.Domain.Model.ValueObjects;
 
 namespace sps.Domain.Model.Models
@@ -10,7 +11,7 @@ namespace sps.Domain.Model.Models
         public StudentModel()
         {
             SpsaCases = new HashSet<SpsaCaseModel>();
-            Comments = new HashSet<StudentCommentModel>();
+            Comments = new HashSet<Comment>();
         }
 
         [Key]
@@ -27,7 +28,7 @@ namespace sps.Domain.Model.Models
         public required SensitiveString Name { get; set; }
         
         [MaxLength(500)]
-        public SensitiveString? Comment { get; set; }
+        public ICollection<Comment> Comments { get; init; }
         
         public DateTime? FinishedDate { get; set; }
         
@@ -38,6 +39,5 @@ namespace sps.Domain.Model.Models
         public EducationModel? Education { get; set; }
         
         public ICollection<SpsaCaseModel> SpsaCases { get; init; }
-        public ICollection<StudentCommentModel> Comments { get; init; }
     }
 }

@@ -1,50 +1,41 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+using sps.BLL.Email;  // For BrevoEmailSender
 using sps.BLL.Services.Implementations;
 using sps.BLL.Services.Interfaces;
 using sps.BLL.SMS;
-using sps.BLL.Email;  // Add the missing namespace for BrevoEmailSender
 using sps.DAL.DataModel;
 using sps.DAL.Repos.Implementations;
 using sps.DAL.Repos.Interfaces;
 using sps.Domain.Model.Services;
-using System.Text;
 
 namespace sps.BLL
 {
     /// <summary>
-    /// Extension methods for setting up services in the business logic layer and setting up repositories in the DAL layer.
+    /// Extension methods for setting up services in the business logic layer and repositories in the DAL layer.
     /// </summary>
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds the business logic layer services to the specified <see cref="IServiceCollection"/>.
+        /// Adds the business logic layer services and configures minimal identity (without custom JWT chaining).
         /// </summary>
-        /// <param name="services">The service collection to add services to.</param>
-        /// <param name="configuration">The configuration instance.</param>
-        /// <returns>The updated service collection.</returns>
-        /// <exception cref="InvalidOperationException">Thrown when a required configuration value is missing.</exception>
         public static IServiceCollection AddBusinessLogicLayer(this IServiceCollection services, IConfiguration configuration)
         {
-            // Register SpsDbContext for SPS domain entities
+            // Register SpsDbContext for domain entities.
             var spsConnectionString = configuration.GetConnectionString("SpsDbConnection")
                 ?? throw new InvalidOperationException("Connection string 'SpsDbConnection' not found.");
-
             services.AddDbContext<SpsDbContext>(options =>
                 options.UseSqlServer(spsConnectionString));
 
-            // Register SpsIdentityDbContext for Identity tables
+            // Register SpsIdentityDbContext for Identity tables.
             var identityConnectionString = configuration.GetConnectionString("IdentityConnection")
                 ?? throw new InvalidOperationException("Connection string 'IdentityConnection' not found.");
-
             services.AddDbContext<SpsIdentityDbContext>(options =>
                 options.UseSqlServer(identityConnectionString));
 
-            // Register Identity services with SpsIdentityDbContext
+            // Configure Identity with minimal identity endpoints.
             services.AddIdentity<IdentityUser<Guid>, IdentityRole<Guid>>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = true;
@@ -57,37 +48,11 @@ namespace sps.BLL
                 options.User.RequireUniqueEmail = true;
             })
             .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<SpsIdentityDbContext>() // Use SpsIdentityDbContext for identity stores
+            .AddEntityFrameworkStores<SpsIdentityDbContext>()
             .AddDefaultTokenProviders();
+            // NOTE: Do NOT chain .AddBearerToken() here—this extension applies to AuthenticationBuilder.
 
-            // Configure JWT authentication
-            var secretKey = configuration["Jwt:SecretKey"]
-                ?? throw new InvalidOperationException("JWT Secret Key is not configured.");
-            var key = Encoding.ASCII.GetBytes(secretKey);
-
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = false; // Set to true in production
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    ValidAudience = configuration["Jwt:Audience"],
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                };
-            });
-
-            // Register repositories (DAL)
+            // Register repositories (DAL).
             services.AddScoped<IStudentRepo, StudentRepo>();
             services.AddScoped<IEducationRepo, EducationRepo>();
             services.AddScoped<ISpsaCaseRepo, SpsaCaseRepo>();
@@ -103,7 +68,7 @@ namespace sps.BLL
             services.AddScoped<ITeacherPaymentRepo, TeacherPaymentRepo>();
             services.AddScoped<ISupportTypeRepo, SupportTypeRepo>();
 
-            // Register services (BLL)
+            // Register services (BLL).
             services.AddScoped<IStudentService, StudentService>();
             services.AddScoped<IEducationService, EducationService>();
             services.AddScoped<ISpsaCaseService, SpsaCaseService>();
@@ -119,17 +84,17 @@ namespace sps.BLL
             services.AddScoped<ITeacherPaymentService, TeacherPaymentService>();
             services.AddScoped<ISupportTypeService, SupportTypeService>();
 
-            // Register Twilio SMS service - keeping SMS services as requested
+            // Register Twilio SMS service.
             services.Configure<TwilioSettings>(configuration.GetSection("Twilio"));
             services.AddTransient<ISMSService, SMSService>();
 
-            // Register Email Sender Service - keeping email services as requested
+            // Register Email Sender Service.
             services.AddTransient<IEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
 
-            // Register encryption service
+            // Register encryption service.
             services.AddScoped<IEncryptionService, AESEncryptionService>();
 
-            // Register comment service
+            // Register comment service.
             services.AddScoped<ICommentService, CommentService>();
 
             return services;

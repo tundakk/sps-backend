@@ -16,35 +16,39 @@ namespace sps.DAL.Configurations
 
         public void Configure(EntityTypeBuilder<StudentPayment> builder)
         {
-            builder.HasKey(p => p.Id);
-
-            builder.Property(p => p.Date)
+            builder.HasKey(sp => sp.Id);
+            
+            builder.Property(sp => sp.Date)
                 .IsRequired();
-
-            builder.Property(p => p.AccountNumber)
-                .UseEncryption(_encryptionService)
-                .IsRequired();
-
-            builder.Property(p => p.Comment)
-                .UseEncryption(_encryptionService);
-
-            builder.Property(p => p.Amount)
+            
+            builder.Property(sp => sp.Amount)
                 .IsRequired()
                 .HasPrecision(18, 2);
 
-            builder.Property(p => p.ExternalVoucherNumber)
-                .HasMaxLength(50);
+            builder.Property(sp => sp.AccountNumber)
+                .UseEncryption(_encryptionService)
+                .IsRequired();
 
-            builder.HasOne(p => p.SupportType)
+            builder.Property(sp => sp.VoucherText)
+                .IsRequired(false);
+
+            builder.Property(sp => sp.CompleteVoucherText)
+                .IsRequired(false);
+
+            builder.Property(sp => sp.ExternalVoucherNumber)
+                .IsRequired(false);
+
+            // Configure relationship with SupportType
+            builder.HasOne(sp => sp.SupportType)
                 .WithMany(st => st.StudentPayments)
-                .HasForeignKey(p => p.SupportTypeId)
-                .IsRequired(false)
+                .HasForeignKey(sp => sp.SupportTypeId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasMany(p => p.SpsaCases)
+            // Configure relationship with Comments
+            builder.HasMany(sp => sp.Comments)
                 .WithOne(c => c.StudentPayment)
                 .HasForeignKey(c => c.StudentPaymentId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
