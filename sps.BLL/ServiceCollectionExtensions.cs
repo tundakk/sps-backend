@@ -2,6 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using sps.BLL.Email;  // For BrevoEmailSender
 using sps.BLL.Services.Implementations;
 using sps.BLL.Services.Interfaces;
@@ -50,7 +53,52 @@ namespace sps.BLL
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<SpsIdentityDbContext>()
             .AddDefaultTokenProviders();
-            // NOTE: Do NOT chain .AddBearerToken() here—this extension applies to AuthenticationBuilder.
+
+            // Configure JWT Authentication for NextAuth compatibility
+            var jwtSection = configuration.GetSection("JwtSettings");
+            services.Configure<JwtSettings>(jwtSection);
+            var jwtSettings = jwtSection.Get<JwtSettings>();
+            var key = Encoding.ASCII.GetBytes(jwtSettings?.Secret ?? throw new InvalidOperationException("JWT Secret is not configured"));
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = !configuration.GetValue<bool>("IsDevEnvironment", false);
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+                
+                // Event configuration for NextAuth compatibility
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        // Support token in cookie for NextAuth integration
+                        if (context.Request.Cookies.ContainsKey("token"))
+                        {
+                            context.Token = context.Request.Cookies["token"];
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            // Register JWT token service
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             // Register repositories (DAL).
             services.AddScoped<IStudentRepo, StudentRepo>();
@@ -99,5 +147,13 @@ namespace sps.BLL
 
             return services;
         }
+    }
+
+    public class JwtSettings
+    {
+        public string Secret { get; set; } = string.Empty;
+        public string Issuer { get; set; } = string.Empty;
+        public string Audience { get; set; } = string.Empty;
+        public int ExpirationInMinutes { get; set; } = 60;
     }
 }

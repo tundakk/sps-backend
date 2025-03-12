@@ -1,5 +1,4 @@
 ﻿// SeedData.cs
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using sps.DAL.DataModel;
@@ -333,22 +332,22 @@ namespace sps.API
             return teachers;
         }
 
-      private static async Task<List<Student>> SeedStudentsAsync(SpsDbContext context, List<Education> educations, List<Period> periods)
-{
-    if (await context.Students.AnyAsync())
-    {
-        return await context.Students.ToListAsync();
-    }
+        private static async Task<List<Student>> SeedStudentsAsync(SpsDbContext context, List<Education> educations, List<Period> periods)
+        {
+            if (await context.Students.AnyAsync())
+            {
+                return await context.Students.ToListAsync();
+            }
 
-    var students = new List<Student>
+            var students = new List<Student>
     {
         new()
         {
             Id = Guid.NewGuid(),
             StudentNumber = "S10001",
-            CPRNumber = new CPRNumber("111111-1111"),
+            CPRNumber = new CPRNumber("1111111111"),
             Name = new SensitiveString("Alex Johnson"),
-            Comments = new List<Comment> 
+            Comments = new List<Comment>
             {
                 new Comment
                 {
@@ -365,7 +364,7 @@ namespace sps.API
         {
             Id = Guid.NewGuid(),
             StudentNumber = "S10002",
-            CPRNumber = new CPRNumber("222222-2222"),
+            CPRNumber = new CPRNumber("2222222222"),
             Name = new SensitiveString("Sam Williams"),
             Comments = new List<Comment>(),
             EducationId = educations[1].Id,
@@ -375,9 +374,9 @@ namespace sps.API
         {
             Id = Guid.NewGuid(),
             StudentNumber = "S10003",
-            CPRNumber = new CPRNumber("333333-3333"),
+            CPRNumber = new CPRNumber("3333333333"),
             Name = new SensitiveString("Taylor Brown"),
-            Comments = new List<Comment> 
+            Comments = new List<Comment>
             {
                 new Comment
                 {
@@ -394,7 +393,7 @@ namespace sps.API
         {
             Id = Guid.NewGuid(),
             StudentNumber = "S10004",
-            CPRNumber = new CPRNumber("444444-4444"),
+            CPRNumber = new CPRNumber("4444444444"),
             Name = new SensitiveString("Jordan Smith"),
             Comments = new List<Comment>(),
             EducationId = educations[3].Id,
@@ -403,10 +402,12 @@ namespace sps.API
         }
     };
 
-    await context.Students.AddRangeAsync(students);
-    await context.SaveChangesAsync();
-    return students;
-}        private static async Task<List<OpkvalSupervision>> SeedOpkvalSupervisionsAsync(SpsDbContext context)
+            await context.Students.AddRangeAsync(students);
+            await context.SaveChangesAsync();
+            return students;
+        }
+
+        private static async Task<List<OpkvalSupervision>> SeedOpkvalSupervisionsAsync(SpsDbContext context)
         {
             if (await context.OpkvalSupervisions.AnyAsync())
             {
@@ -425,14 +426,15 @@ namespace sps.API
             await context.SaveChangesAsync();
             return supervisions;
         }
-private static async Task<List<TeacherPayment>> SeedTeacherPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
-{
-    if (await context.TeacherPayments.AnyAsync())
-    {
-        return await context.TeacherPayments.ToListAsync();
-    }
 
-    var payments = new List<TeacherPayment>
+        private static async Task<List<TeacherPayment>> SeedTeacherPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
+        {
+            if (await context.TeacherPayments.AnyAsync())
+            {
+                return await context.TeacherPayments.ToListAsync();
+            }
+
+            var payments = new List<TeacherPayment>
     {
         new()
         {
@@ -481,20 +483,19 @@ private static async Task<List<TeacherPayment>> SeedTeacherPaymentsAsync(SpsDbCo
         }
     };
 
-    await context.TeacherPayments.AddRangeAsync(payments);
-    await context.SaveChangesAsync();
-    return payments;
-}
+            await context.TeacherPayments.AddRangeAsync(payments);
+            await context.SaveChangesAsync();
+            return payments;
+        }
 
+        private static async Task<List<StudentPayment>> SeedStudentPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
+        {
+            if (await context.StudentPayments.AnyAsync())
+            {
+                return await context.StudentPayments.ToListAsync();
+            }
 
-       private static async Task<List<StudentPayment>> SeedStudentPaymentsAsync(SpsDbContext context, List<SupportType> supportTypes)
-{
-    if (await context.StudentPayments.AnyAsync())
-    {
-        return await context.StudentPayments.ToListAsync();
-    }
-
-    var payments = new List<StudentPayment>
+            var payments = new List<StudentPayment>
     {
         new()
         {
@@ -546,10 +547,10 @@ private static async Task<List<TeacherPayment>> SeedTeacherPaymentsAsync(SpsDbCo
         }
     };
 
-    await context.StudentPayments.AddRangeAsync(payments);
-    await context.SaveChangesAsync();
-    return payments;
-}
+            await context.StudentPayments.AddRangeAsync(payments);
+            await context.SaveChangesAsync();
+            return payments;
+        }
 
         private static async Task<List<SpsaCase>> SeedSpsaCasesAsync(
             SpsDbContext context,

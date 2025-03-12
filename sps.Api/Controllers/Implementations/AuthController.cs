@@ -1,213 +1,305 @@
-//namespace sps.API.Controllers
-//{
-//    using Microsoft.AspNetCore.Identity;
-//    using Microsoft.AspNetCore.Mvc;
-//    using Microsoft.Extensions.Configuration;
-//    using Microsoft.IdentityModel.Tokens;
-//    using System;
-//    using System.IdentityModel.Tokens.Jwt;
-//    using System.Security.Claims;
-//    using System.Text;
-//    using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using sps.API.Controllers.Base;
+using sps.BLL;
+using sps.BLL.Services.Interfaces;
+using sps.Domain.Model.Dtos;
+using sps.Domain.Model.Responses;
+using System.Security.Claims;
 
-//    /// <summary>
-//    /// Controller for handling authentication-related actions.
-//    /// </summary>
-//    [Route("api/[controller]")]
-//    [APIController]
-//    public class AuthController : ControllerBase
-//    {
-//        private readonly UserManager<IdentityUser<Guid>> _userManager;
-//        private readonly IConfiguration _configuration;
-//        private readonly string _jwtSecretKey;
-//        private readonly string _jwtIssuer;
-//        private readonly string _jwtAudience;
+namespace sps.API.Controllers.Implementations
+{
+    /// <summary>
+    /// Controller for authentication endpoints that return JSON responses for NextAuth integration
+    /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : BaseController<AuthController>
+    {
+        private readonly UserManager<IdentityUser<Guid>> _userManager;
+        private readonly SignInManager<IdentityUser<Guid>> _signInManager;
+        private readonly JwtSettings _jwtSettings;
+        private readonly IJwtTokenService _jwtTokenService;
 
-//        /// <summary>
-//        /// Initializes a new instance of the <see cref="AuthController"/> class.
-//        /// </summary>
-//        /// <param name="userManager">The user manager.</param>
-//        /// <param name="configuration">The configuration.</param>
-//        public AuthController(UserManager<IdentityUser<Guid>> userManager, IConfiguration configuration)
-//        {
-//            _userManager = userManager;
-//            _configuration = configuration;
-//            _jwtSecretKey = _configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT secret is not configured.");
-//            _jwtIssuer = _configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured.");
-//            _jwtAudience = _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured.");
-//        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthController"/> class.
+        /// </summary>
+        /// <param name="logger">The logger instance.</param>
+        /// <param name="userManager">The user manager instance.</param>
+        /// <param name="signInManager">The sign-in manager instance.</param>
+        /// <param name="jwtSettings">The JWT settings.</param>
+        /// <param name="jwtTokenService">The JWT token service.</param>
+        public AuthController(
+            ILogger<AuthController> logger,
+            UserManager<IdentityUser<Guid>> userManager,
+            SignInManager<IdentityUser<Guid>> signInManager,
+            IOptions<JwtSettings> jwtSettings,
+            IJwtTokenService jwtTokenService) : base(logger)
+        {
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _jwtSettings = jwtSettings.Value;
+            _jwtTokenService = jwtTokenService;
+        }
 
-//        /// <summary>
-//        /// Authenticates a user and generates a JWT token.
-//        /// </summary>
-//        /// <param name="model">The login details.</param>
-//        /// <returns>An <see cref="IActionResult"/> containing the JWT token and expiration.</returns>
-//        [HttpPost("login")]
-//        public async Task<IActionResult> Login([FromBody] LoginModel model)
-//        {
-//            var user = await _userManager.FindByNameAsync(model.Username);
-//            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
-//            {
-//                return Unauthorized(new { message = "Invalid username or password." });
-//            }
+        /// <summary>
+        /// Endpoint for user login that returns a JWT token
+        /// </summary>
+        /// <param name="loginDto">The login credentials</param>
+        /// <returns>JWT token and user information</returns>
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        {
+            try
+            {
+                // Find user by email
+                var user = await _userManager.FindByEmailAsync(loginDto.Email);
+                if (user == null)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("Invalid login attempt", "INVALID_CREDENTIALS"));
+                }
 
-//            var roles = await _userManager.GetRolesAsync(user);
+                // Check password
+                var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+                if (!result.Succeeded)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("Invalid login attempt", "INVALID_CREDENTIALS"));
+                }
 
-//            var authClaims = new List<Claim>
-//            {
-//                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
-//                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-//            };
+                // Get user roles
+                var roles = await _userManager.GetRolesAsync(user);
 
-//            foreach (var role in roles)
-//            {
-//                authClaims.Add(new Claim(ClaimTypes.Role, role));
-//            }
+                // Generate token using token service
+                var token = _jwtTokenService.GenerateJwtToken(user, roles);
 
-//            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecretKey));
-//            var token = new JwtSecurityToken(
-//                issuer: _jwtIssuer,
-//                audience: _jwtAudience,
-//                expires: DateTime.Now.AddHours(3),
-//                claims: authClaims,
-//                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-//            );
+                // Return the token and user info
+                var response = new AuthResponseDto
+                {
+                    Token = token,
+                    ExpiresIn = _jwtSettings.ExpirationInMinutes * 60,
+                    UserId = user.Id.ToString(),
+                    Email = user.Email ?? string.Empty,
+                    UserName = user.UserName ?? string.Empty,
+                    Roles = roles.ToArray()
+                };
 
-//            var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+                return Ok(ServiceResponse<AuthResponseDto>.CreateSuccess(response));
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
 
-//            // Generate a refresh token
-//            var refreshToken = Guid.NewGuid().ToString();
+        /// <summary>
+        /// Endpoint to register a new user
+        /// </summary>
+        /// <param name="registerDto">The registration information</param>
+        /// <returns>Result of the registration attempt</returns>
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        {
+            try
+            {
+                // Check if email already exists
+                var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+                if (existingUser != null)
+                {
+                    return BadRequest(ServiceResponse<object>.CreateError("Email already registered", "EMAIL_EXISTS"));
+                }
 
-//            // Store refresh token in AspNetUserTokens table
-//            await _userManager.SetAuthenticationTokenAsync(user, _jwtIssuer, "RefreshToken", refreshToken);
+                // Create the user
+                var user = new IdentityUser<Guid>
+                {
+                    UserName = registerDto.Email,
+                    Email = registerDto.Email,
+                    EmailConfirmed = false // Set to true if you don't need email confirmation
+                };
 
-//            return Ok(new
-//            {
-//                token = jwtToken,
-//                refreshToken,
-//                expiration = token.ValidTo
-//            });
-//        }
+                var result = await _userManager.CreateAsync(user, registerDto.Password);
+                
+                if (result.Succeeded)
+                {
+                    // Assign default role
+                    await _userManager.AddToRoleAsync(user, "user");
+                    
+                    // Generate token using token service
+                    var roles = new[] { "user" };
+                    var token = _jwtTokenService.GenerateJwtToken(user, roles);
 
-//        /// <summary>
-//        /// Refreshes the JWT token using the provided refresh token.
-//        /// </summary>
-//        /// <param name="model">The token refresh details.</param>
-//        /// <returns>An <see cref="IActionResult"/> containing the new JWT token and refresh token.</returns>
-//        [HttpPost("refresh")]
-//        public async Task<IActionResult> RefreshToken([FromBody] TokenRefreshModel model)
-//        {
-//            var principal = GetPrincipalFromExpiredToken(model.Token);
-//            var username = principal?.Identity?.Name;
-//            if (username == null)
-//            {
-//                return Unauthorized();
-//            }
+                    // Return the token and user info
+                    var response = new AuthResponseDto
+                    {
+                        Token = token,
+                        ExpiresIn = _jwtSettings.ExpirationInMinutes * 60,
+                        UserId = user.Id.ToString(),
+                        Email = user.Email ?? string.Empty,
+                        UserName = user.UserName ?? string.Empty,
+                        Roles = roles
+                    };
 
-//            var user = await _userManager.FindByNameAsync(username);
-//            if (user == null)
-//            {
-//                return Unauthorized();
-//            }
+                    return Ok(ServiceResponse<AuthResponseDto>.CreateSuccess(response));
+                }
+                
+                // If registration failed, return the errors
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                return BadRequest(ServiceResponse<object>.CreateError("Registration failed: " + string.Join(", ", errors), "REGISTRATION_FAILED"));
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
 
-//            // Get the stored refresh token
-//            var storedRefreshToken = await _userManager.GetAuthenticationTokenAsync(user, _jwtIssuer, "RefreshToken");
+        /// <summary>
+        /// Gets the current logged-in user's info
+        /// </summary>
+        /// <returns>User information</returns>
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetMe()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("User not found", "UNAUTHORIZED"));
+                }
 
-//            if (storedRefreshToken != model.RefreshToken)
-//            {
-//                return Unauthorized(new { message = "Invalid refresh token." });
-//            }
-//            var claims = principal?.Claims?.ToList();
-//            if (claims == null)
-//            {
-//                return Unauthorized(new { message = "Invalid token claims." });
-//            }
-//            var newJwtToken = GenerateJwtToken(claims);
-//            var newRefreshToken = Guid.NewGuid().ToString();
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("User not found", "UNAUTHORIZED"));
+                }
 
-//            // Store the new refresh token
-//            await _userManager.SetAuthenticationTokenAsync(user, _jwtIssuer, "RefreshToken", newRefreshToken);
+                var roles = await _userManager.GetRolesAsync(user);
 
-//            return Ok(new
-//            {
-//                token = newJwtToken,
-//                refreshToken = newRefreshToken
-//            });
-//        }
+                var userDto = new UserDto
+                {
+                    Id = user.Id.ToString(),
+                    Email = user.Email ?? string.Empty,
+                    UserName = user.UserName ?? string.Empty,
+                    Roles = roles.ToArray()
+                };
 
-//        /// <summary>
-//        /// Logs out the user and invalidates the refresh token.
-//        /// </summary>
-//        /// <param name="model">The token refresh details.</param>
-//        /// <returns>An <see cref="IActionResult"/> indicating the result of the logout operation.</returns>
-//        [HttpPost("logout")]
-//        public async Task<IActionResult> Logout([FromBody] TokenRefreshModel model)
-//        {
-//            var principal = GetPrincipalFromExpiredToken(model.Token);
-//            var username = principal?.Identity?.Name;
-//            if (username == null)
-//            {
-//                return Unauthorized();
-//            }
+                return Ok(ServiceResponse<UserDto>.CreateSuccess(userDto));
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
 
-//            var user = await _userManager.FindByNameAsync(username);
-//            if (user == null)
-//            {
-//                return Unauthorized();
-//            }
+        /// <summary>
+        /// Refreshes the JWT token
+        /// </summary>
+        /// <returns>New JWT token</returns>
+        [HttpPost("refresh-token")]
+        [Authorize]
+        public async Task<IActionResult> RefreshToken()
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("Invalid token", "INVALID_TOKEN"));
+                }
 
-//            // Remove the refresh token
-//            await _userManager.RemoveAuthenticationTokenAsync(user, _jwtIssuer, "RefreshToken");
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("User not found", "USER_NOT_FOUND"));
+                }
 
-//            return Ok(new { message = "Logged out successfully." });
-//        }
+                // Get user roles
+                var roles = await _userManager.GetRolesAsync(user);
 
-//        /// <summary>
-//        /// Generates a new JWT token.
-//        /// </summary>
-//        /// <param name="claims">The claims to include in the token.</param>
-//        /// <returns>The generated JWT token.</returns>
-//        private string GenerateJwtToken(List<Claim> claims)
-//        {
-//            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecretKey));
-//            var token = new JwtSecurityToken(
-//                issuer: _jwtIssuer,
-//                audience: _jwtAudience,
-//                expires: DateTime.Now.AddHours(3),
-//                claims: claims,
-//                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-//            );
-//            return new JwtSecurityTokenHandler().WriteToken(token);
-//        }
+                // Generate new token using token service
+                var token = _jwtTokenService.GenerateJwtToken(user, roles);
 
-//        /// <summary>
-//        /// Gets the principal from an expired token.
-//        /// </summary>
-//        /// <param name="token">The expired token.</param>
-//        /// <returns>The claims principal.</returns>
-//        private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
-//        {
-//            var tokenValidationParameters = new TokenValidationParameters
-//            {
-//                ValidateAudience = true,
-//                ValidateIssuer = true,
-//                ValidateIssuerSigningKey = true,
-//                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecretKey)),
-//                ValidateLifetime = false, // Important: we are checking an expired token
-//                ValidIssuer = _jwtIssuer,
-//                ValidAudience = _jwtAudience,
-//            };
+                // Return the token
+                var response = new AuthResponseDto
+                {
+                    Token = token,
+                    ExpiresIn = _jwtSettings.ExpirationInMinutes * 60,
+                    UserId = user.Id.ToString(),
+                    Email = user.Email ?? string.Empty,
+                    UserName = user.UserName ?? string.Empty,
+                    Roles = roles.ToArray()
+                };
 
-//            var tokenHandler = new JwtSecurityTokenHandler();
-//            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-//            var jwtSecurityToken = securityToken as JwtSecurityToken;
+                return Ok(ServiceResponse<AuthResponseDto>.CreateSuccess(response));
+            }
+            catch (Exception ex)
+            {
+                return HandleError(ex);
+            }
+        }
 
-//            if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-//            {
-//                throw new SecurityTokenException("Invalid token");
-//            }
+        /// <summary>
+        /// NextAuth session endpoint for validating tokens and sessions
+        /// </summary>
+        /// <returns>User session information for NextAuth</returns>
+        [HttpGet("session")]
+        public async Task<IActionResult> GetSession()
+        {
+            try
+            {
+                // Check if there's an authenticated user
+                if (User.Identity == null || !User.Identity.IsAuthenticated)
+                {
+                    // Return empty session for non-authenticated users
+                    return Ok(new { });
+                }
 
-//            return principal;
-//        }
-//    }
-//}
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Ok(new { });
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return Ok(new { });
+                }
+
+                var roles = await _userManager.GetRolesAsync(user);
+
+                // Return in format that NextAuth expects
+                return Ok(new
+                {
+                    user = new
+                    {
+                        id = user.Id.ToString(),
+                        email = user.Email,
+                        name = user.UserName,
+                        roles = roles.ToArray()
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error getting session");
+                return Ok(new { }); // Return empty session on error
+            }
+        }
+
+        /// <summary>
+        /// NextAuth compatible endpoint for handling CSRF tokens
+        /// </summary>
+        /// <returns>CSRF token for NextAuth</returns>
+        [HttpGet("csrf")]
+        [AllowAnonymous]
+        public IActionResult GetCsrfToken()
+        {
+            return Ok(new { csrfToken = Guid.NewGuid().ToString() });
+        }
+    }
+}

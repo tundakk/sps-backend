@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Http;
 using sps.API;
 using sps.API.Middleware;
 using sps.BLL;
@@ -10,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Add Business Logic Layer services, including DbContext, Identity, Repositories, and other services.
+// Add Business Logic Layer services, including DbContext, Identity, JWT Auth, Repositories, and other services.
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
 builder.Services.AddScoped<IEncryptionService, AESEncryptionService>();
 
@@ -60,17 +61,38 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS configuration
+// CORS configuration - Enhanced to work better with NextAuth
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost",
+    options.AddPolicy("NextAuthPolicy",
         policyBuilder =>
         {
-            policyBuilder.WithOrigins("http://localhost:3000", "http://localhost:3001", "exp://192.168.153.179:8081")
+            // Development origins
+            var allowedOrigins = new List<string> { "http://localhost:3000", "http://localhost:3001", "exp://192.168.153.179:8081" };
+            
+            // Production origins - read from appsettings
+            var prodOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+            if (prodOrigins != null && prodOrigins.Length > 0)
+            {
+                allowedOrigins.AddRange(prodOrigins);
+            }
+
+            policyBuilder.WithOrigins(allowedOrigins.ToArray())
                          .AllowAnyHeader()
                          .AllowAnyMethod()
-                         .AllowCredentials();
+                         .AllowCredentials(); // Important for cookies
         });
+});
+
+// Configure cookie policy to work with NextAuth
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    // This lambda determines whether user consent for non-essential cookies is needed for a given request
+    options.CheckConsentNeeded = context => false;
+    
+    // Configure cookie settings for cross-domain requests
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.Secure = CookieSecurePolicy.Always;
 });
 
 var app = builder.Build();
@@ -107,23 +129,32 @@ else
 }
 
 // Register the global exception middleware (should be early in the pipeline)
-app.UseGlobalExceptionHandler();
+app.UseCustomExceptionHandler();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseCors("AllowLocalhost");
+// Use the enhanced CORS policy
+app.UseCors("NextAuthPolicy");
+
+// Use cookie policy
+app.UseCookiePolicy();
+
+// Use our custom JWT middleware (before standard auth middlewares)
+app.UseJwtMiddleware();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Update the Identity endpoints mapping to use the correct type
-app.MapIdentityApi<IdentityUser<Guid>>();
+// No longer using MapIdentityApi as we'll create custom JSON endpoints instead
+// app.MapIdentityApi<IdentityUser<Guid>>();
 
-app.MapPost("/register", () => Results.NotFound("Registration is disabled."))
-    .ExcludeFromDescription(); // Prevent swagger from processing this endpoint
+// Removing this as we'll handle registration through our AuthController
+// app.MapPost("/register", () => Results.NotFound("Registration is disabled."))
+//    .ExcludeFromDescription();
+
 app.Run();
