@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using sps.Domain.Model.Services;
 using sps.DAL.Configurations;
+using sps.Domain.Model.Services;
 
 namespace sps.DAL.DataModel
 {
@@ -13,6 +13,8 @@ namespace sps.DAL.DataModel
             modelBuilder.ApplyConfiguration(new SupportingTeacherConfiguration(encryptionService));
             modelBuilder.ApplyConfiguration(new StudentPaymentConfiguration(encryptionService));
             modelBuilder.ApplyConfiguration(new TeacherPaymentConfiguration(encryptionService));
+            modelBuilder.ApplyConfiguration(new CommentConfiguration(encryptionService));
+
 
             return modelBuilder;
         }

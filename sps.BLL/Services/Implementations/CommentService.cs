@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using sps.BLL.Services.Interfaces;
@@ -9,7 +5,6 @@ using sps.DAL.DataModel;
 using sps.Domain.Model.Entities;
 using sps.Domain.Model.Models;
 using sps.Domain.Model.Responses;
-using sps.Domain.Model.ValueObjects;
 
 namespace sps.BLL.Services.Implementations
 {
@@ -35,7 +30,7 @@ namespace sps.BLL.Services.Implementations
                 // Validate that the entity exists based on EntityType
                 if (!await EntityExistsAsync(commentModel.EntityType, commentModel.EntityId))
                 {
-                    _logger.LogWarning("Attempted to add comment to non-existent {EntityType} with ID {EntityId}", 
+                    _logger.LogWarning("Attempted to add comment to non-existent {EntityType} with ID {EntityId}",
                         commentModel.EntityType, commentModel.EntityId);
                     return ServiceResponse<CommentModel>.CreateError($"{commentModel.EntityType} with ID {commentModel.EntityId} not found");
                 }
@@ -95,7 +90,7 @@ namespace sps.BLL.Services.Implementations
                 return ServiceResponse<List<CommentModel>>.CreateError(ex.Message);
             }
         }
-        
+
         /// <inheritdoc />
         public async Task<bool> DeleteCommentAsync(Guid commentId)
         {
@@ -143,15 +138,19 @@ namespace sps.BLL.Services.Implementations
                 case "SpsaCase":
                     comment.SpsaCaseId = entityId;
                     break;
+
                 case "Student":
                     comment.StudentId = entityId;
                     break;
+
                 case "TeacherPayment":
                     comment.TeacherPaymentId = entityId;
                     break;
+
                 case "StudentPayment":
                     comment.StudentPaymentId = entityId;
                     break;
+
                 case "OpkvalSupervision":
                     comment.OpkvalSupervisionId = entityId;
                     break;

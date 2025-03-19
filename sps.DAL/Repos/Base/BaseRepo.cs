@@ -20,7 +20,7 @@ namespace sps.DAL.Repos.Base
         public virtual async Task<T> GetByIdAsync(Guid id)
         {
             // Use 'await' with the asynchronous method 'FindAsync'
-            var entity = await _context.Set<T>().FindAsync(id.ToString());
+            var entity = await _context.Set<T>().FindAsync(id);
             if (entity == null)
             {
                 throw new ArgumentException($"Entity of type {typeof(T).Name} with ID {id} was not found.");

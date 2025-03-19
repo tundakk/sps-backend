@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using sps.Domain.Model.Entities;
-using sps.Domain.Model.ValueObjects;
-using sps.Domain.Model.Services;
 using sps.DAL.Configurations.Converters;
+using sps.Domain.Model.Entities;
+using sps.Domain.Model.Services;
 
 namespace sps.DAL.Configurations
 {

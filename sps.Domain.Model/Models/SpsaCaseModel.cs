@@ -1,8 +1,5 @@
 using sps.Domain.Model.ValueObjects;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace sps.Domain.Model.Models
 {
@@ -27,15 +24,15 @@ namespace sps.Domain.Model.Models
         public int HoursSpent { get; set; }
 
         public SensitiveString Comment { get; set; }
-        
-        public ICollection<SpsaCaseCommentModel> Comments { get; init; }
+
+        public ICollection<SpsaCaseCommentModel> Comments { get; init; } // TODO: change to commentmodel
 
         [Required]
         public bool IsActive { get; set; }
 
         public DateTime? ApplicationDate { get; set; }
         public DateTime? LatestReapplicationDate { get; set; }
-        
+
         public bool CourseDescriptionReceived { get; set; }
         public bool TimesheetReceived { get; set; }
         public bool StudentRefundReleased { get; set; }
@@ -44,6 +41,7 @@ namespace sps.Domain.Model.Models
 
         [Required]
         public Guid StudentId { get; set; }
+
         public StudentModel Student { get; set; }
 
         public Guid? SupportingTeacherId { get; set; }

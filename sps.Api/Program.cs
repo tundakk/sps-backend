@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Http;
 using sps.API;
 using sps.API.Middleware;
 using sps.BLL;
@@ -69,7 +67,7 @@ builder.Services.AddCors(options =>
         {
             // Development origins
             var allowedOrigins = new List<string> { "http://localhost:3000", "http://localhost:3001", "exp://192.168.153.179:8081" };
-            
+
             // Production origins - read from appsettings
             var prodOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
             if (prodOrigins != null && prodOrigins.Length > 0)
@@ -89,7 +87,7 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     // This lambda determines whether user consent for non-essential cookies is needed for a given request
     options.CheckConsentNeeded = context => false;
-    
+
     // Configure cookie settings for cross-domain requests
     options.MinimumSameSitePolicy = SameSiteMode.None;
     options.Secure = CookieSecurePolicy.Always;
@@ -118,13 +116,9 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
-    // If you need MigrationsEndPoint, ensure you have added the necessary services
-    // app.UseMigrationsEndPoint();
 }
 else
 {
-    // Remove the default exception handler as we're using our custom one
-    // app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
@@ -143,18 +137,11 @@ app.UseCors("NextAuthPolicy");
 app.UseCookiePolicy();
 
 // Use our custom JWT middleware (before standard auth middlewares)
-app.UseJwtMiddleware();
+//app.UseJwtMiddleware();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// No longer using MapIdentityApi as we'll create custom JSON endpoints instead
-// app.MapIdentityApi<IdentityUser<Guid>>();
-
-// Removing this as we'll handle registration through our AuthController
-// app.MapPost("/register", () => Results.NotFound("Registration is disabled."))
-//    .ExcludeFromDescription();
 
 app.Run();

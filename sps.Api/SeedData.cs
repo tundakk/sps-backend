@@ -53,7 +53,6 @@ namespace sps.API
             {
                 new() { Id = Guid.NewGuid(), Name = "Admin", NormalizedName = "ADMIN" },
                 new() { Id = Guid.NewGuid(), Name = "User", NormalizedName = "USER" },
-                new() { Id = Guid.NewGuid(), Name = "Manager", NormalizedName = "MANAGER" }
             };
 
             foreach (var role in roles)
@@ -77,7 +76,7 @@ namespace sps.API
                 NormalizedUserName = "USER1@EXAMPLE.COM",
                 NormalizedEmail = "USER1@EXAMPLE.COM",
                 EmailConfirmed = true,
-                PhoneNumber = "111-11111"
+                PhoneNumber = "11111111"
             };
 
             var user2 = new IdentityUser<Guid>
@@ -88,7 +87,7 @@ namespace sps.API
                 NormalizedUserName = "USER2@EXAMPLE.COM",
                 NormalizedEmail = "USER2@EXAMPLE.COM",
                 EmailConfirmed = true,
-                PhoneNumber = "222-22222"
+                PhoneNumber = "22222222"
             };
 
             var user3 = new IdentityUser<Guid>
@@ -99,7 +98,7 @@ namespace sps.API
                 NormalizedUserName = "USER3@EXAMPLE.COM",
                 NormalizedEmail = "USER3@EXAMPLE.COM",
                 EmailConfirmed = true,
-                PhoneNumber = "333-33333"
+                PhoneNumber = "33333333"
             };
 
             users.AddRange(new[] { user1, user2, user3 });

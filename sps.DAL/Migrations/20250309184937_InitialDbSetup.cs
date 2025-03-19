@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -356,7 +355,7 @@ namespace sps.DAL.Migrations
                     TeacherPaymentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     StudentPaymentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OpkvalSupervisionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CommentText_Value = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    CommentText = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

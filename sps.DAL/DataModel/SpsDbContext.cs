@@ -9,7 +9,7 @@ namespace sps.DAL.DataModel
     {
         private readonly IEncryptionService _encryptionService;
 
-        public SpsDbContext(DbContextOptions<SpsDbContext> options, IEncryptionService encryptionService) 
+        public SpsDbContext(DbContextOptions<SpsDbContext> options, IEncryptionService encryptionService)
             : base(options)
         {
             _encryptionService = encryptionService;
@@ -34,16 +34,16 @@ namespace sps.DAL.DataModel
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-               // Configure the SupportRate property with precision and scale
+            // Configure the SupportRate property with precision and scale
             modelBuilder.Entity<SpsaCase>()
                 .Property(c => c.SupportRate)
                 .HasPrecision(18, 2); // Using common money precision/scale - adjust if needed
-            
-            // Use encryption for sensitive data
+                                      // Use encryption for sensitive data
             modelBuilder.UseEncryption(_encryptionService);
 
             // Apply all configurations from assembly
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
+
     }
 }
