@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using sps.BLL.Email;  // For BrevoEmailSender
 using sps.BLL.Services.Implementations;
 using sps.BLL.Services.Interfaces;
@@ -13,6 +12,7 @@ using sps.DAL.DataModel;
 using sps.DAL.Repos.Implementations;
 using sps.DAL.Repos.Interfaces;
 using sps.Domain.Model.Services;
+using System.Text;
 
 namespace sps.BLL
 {
@@ -81,7 +81,7 @@ namespace sps.BLL
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
-                
+
                 // Event configuration for NextAuth compatibility
                 options.Events = new JwtBearerEvents
                 {
@@ -144,6 +144,9 @@ namespace sps.BLL
 
             // Register comment service.
             services.AddScoped<ICommentService, CommentService>();
+
+            // Add memory caching
+            services.AddMemoryCache();
 
             return services;
         }
