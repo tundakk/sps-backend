@@ -6,6 +6,12 @@ namespace sps.Domain.Model.Models
 {
     public class EduCategoryModel
     {
+        public EduCategoryModel()
+        {
+            EducationalPrograms = new HashSet<EducationalProgramModel>();
+            SpsaCases = new HashSet<SpsaCaseModel>();
+        }
+
         [Key]
         public Guid Id { get; set; }
         
@@ -13,7 +19,7 @@ namespace sps.Domain.Model.Models
         [MaxLength(100)]
         public string Name { get; set; }
 
-        public ICollection<EducationModel> Educations { get; set; }
-        public ICollection<SpsaCaseModel> SpsaCases { get; set; }
+        public ICollection<EducationalProgramModel> EducationalPrograms { get; init; }
+        public ICollection<SpsaCaseModel> SpsaCases { get; init; }
     }
 }

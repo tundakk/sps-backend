@@ -19,13 +19,12 @@ namespace sps.DAL.Repos.Base
         /// <returns>Returns the entity that matches the ID.</returns>
         public virtual async Task<T> GetByIdAsync(Guid id)
         {
-            // Use 'await' with the asynchronous method 'FindAsync'
-            var entity = await _context.Set<T>().FindAsync(id.ToString());
+            var entity = await _context.Set<T>().FindAsync(id);
             if (entity == null)
             {
                 throw new ArgumentException($"Entity of type {typeof(T).Name} with ID {id} was not found.");
             }
-            return entity; // Now, 'entity' is returned correctly in an async method
+            return entity;
         }
 
         /// <summary>
@@ -47,7 +46,7 @@ namespace sps.DAL.Repos.Base
         {
             // Use 'await' with 'AddAsync'
             var addedEntity = (await _context.Set<T>().AddAsync(entity)).Entity;
-            await SaveAsync(); // Call the asynchronous 'SaveAsync' method
+            await SaveAsync();
             return addedEntity;
         }
 

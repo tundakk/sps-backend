@@ -14,7 +14,7 @@
     /// <summary>
     /// Class responsible for sending emails using Brevo (SendinBlue) API.
     /// </summary>
-    public class BrevoEmailSender : IEmailSender<IdentityUser<Guid>>
+    public class BrevoEmailSender : IExtendedEmailSender<IdentityUser<Guid>>
     {
         private readonly IConfiguration _configuration;
         private readonly TransactionalEmailsApi _emailAPI;
@@ -46,9 +46,15 @@
                 throw new InvalidOperationException("Sender name or email is not configured.");
             }
 
-            // Configure API client with API key
-            Configuration.Default.ApiKey.Add("api-key", brevoAPIKey);
-            _emailAPI = new TransactionalEmailsApi();
+            // Create a specific configuration instance instead of using static configuration
+            var config = new Configuration();
+            
+            config.ApiKey.Add("api-key", brevoAPIKey);
+            
+            // Create the API client with explicit configuration
+            _emailAPI = new TransactionalEmailsApi(config);
+            
+            _logger.LogInformation("Brevo email sender initialized successfully");
         }
 
         /// <summary>
@@ -92,6 +98,25 @@
         {
             var subject = "Your Password Reset Code";
             var message = $"<p>Hello {user.UserName},</p><p>Your password reset code is: {resetCode}</p>";
+
+            await SendEmailAsync(email, subject, message);
+        }
+
+        /// <summary>
+        /// Sends a confirmation code to the specified email.
+        /// </summary>
+        /// <param name="user">The user to whom the email is sent.</param>
+        /// <param name="email">The email address to send the confirmation code to.</param>
+        /// <param name="confirmationCode">The confirmation code to be sent.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async System.Threading.Tasks.Task SendConfirmationCodeAsync(IdentityUser<Guid> user, string email, string confirmationCode)
+        {
+            var subject = "Your Email Verification Code";
+            var message = $@"<p>Hello {user.UserName},</p>
+                            <p>Thanks for registering with our service. To verify your email address, please use the following code:</p>
+                            <h2 style='font-size: 24px; padding: 10px; background-color: #f0f0f0; border-radius: 4px; display: inline-block;'>{confirmationCode}</h2>
+                            <p>This code will expire in 24 hours.</p>
+                            <p>If you didn't request this code, you can safely ignore this email.</p>";
 
             await SendEmailAsync(email, subject, message);
         }

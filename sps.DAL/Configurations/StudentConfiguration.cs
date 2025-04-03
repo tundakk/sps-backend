@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using sps.DAL.Configurations.Extensions;
 using sps.Domain.Model.Entities;
-using sps.Domain.Model.ValueObjects;
 using sps.Domain.Model.Services;
-using sps.DAL.Configurations.Converters;
 
 namespace sps.DAL.Configurations
 {
@@ -18,37 +17,46 @@ namespace sps.DAL.Configurations
 
         public void Configure(EntityTypeBuilder<Student> builder)
         {
-            builder.HasKey(s => s.Id);
-            builder.Property(s => s.StudentNumber).IsRequired();
+            builder.HasKey(e => e.Id);
 
-            // Configure encrypted CPR number
-            builder.Property(s => s.CPRNumber)
-                .HasConversion(new EncryptedCPRNumberConverter(_encryptionService))
+            builder.Property(e => e.StudentNumber)
                 .IsRequired();
 
-            // Configure encrypted Name
-            builder.Property(s => s.Name)
-                .UseEncryption(_encryptionService)
+            // Apply encryption to CPRNumber 
+            builder.Property(e => e.CPRNumber)
+                .IsRequired()
+                .UseEncryption(_encryptionService);
+
+            // Apply encryption to Name
+            builder.Property(e => e.Name)
+                .IsRequired()
+                .UseEncryption(_encryptionService);
+
+            builder.Property(e => e.CreatedAt)
                 .IsRequired();
 
-            // Navigation properties configuration
-            builder.HasOne(s => s.StartPeriod)
-                .WithMany(p => p.Students)
-                .HasForeignKey(s => s.StartPeriodId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.SetNull);
+            builder.Property(e => e.UpdatedAt)
+                .IsRequired();
 
-            builder.HasOne(s => s.Education)
-                .WithMany(e => e.Students)
-                .HasForeignKey(s => s.EducationId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.SetNull);
+            // Relationships
+            builder.HasOne(e => e.EducationalProgram)
+                .WithMany(ep => ep.Students)
+                .HasForeignKey(e => e.EducationalProgramId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure relationship with Comments
-            builder.HasMany(s => s.Comments)
-                .WithOne(c => c.Student)
-                .HasForeignKey(c => c.StudentId)
+            builder.HasOne(e => e.StartPeriod)
+                .WithMany()
+                .HasForeignKey(e => e.StartPeriodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasMany(e => e.Comments)
+                .WithOne()
+                .HasForeignKey("StudentId")
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(e => e.SpsaCases)
+                .WithOne(sc => sc.Student)
+                .HasForeignKey(sc => sc.StudentId);
         }
     }
 }

@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
 using sps.Domain.Model.Models;
+using sps.Domain.Model.Responses;
+using sps.Domain.Model.ValueObjects;
 
 namespace sps.API.Controllers.Implementations
 {
@@ -62,7 +64,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _studentService.InsertAsync(studentModel);
-                return CreatedResponse(response, nameof(GetByIdAsync), 
+                return CreatedResponse(response, nameof(GetByIdAsync),
                     new { id = response.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
@@ -98,6 +100,39 @@ namespace sps.API.Controllers.Implementations
             }
             catch (Exception ex)
             {
+                return HandleError(ex);
+            }
+        }
+
+        ///<inheritdoc/>
+        [HttpGet("cpr/{cprNumber}")]
+        public async Task<IActionResult> GetByCprAsync(string cprNumber)
+        {
+            try
+            {
+                // Validate CPR number format
+                if (!CPRNumber.IsValid(cprNumber))
+                {
+                    var validationErrors = new Dictionary<string, List<string>>
+                    {
+                        { nameof(cprNumber), new List<string> { "Invalid CPR number format." } }
+                    };
+                    var errorResponse = ServiceResponse<StudentModel>.CreateValidationError(validationErrors);
+                    return BadRequest(errorResponse);
+                }
+
+                // Create CPRNumber value object
+                var cpr = new CPRNumber(cprNumber);
+
+                // Call the service method
+                var response = await _studentService.GetByCprAsync(cpr);
+
+                // Process and return the response using the ServiceResponse layer
+                return ProcessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions
                 return HandleError(ex);
             }
         }

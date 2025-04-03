@@ -15,8 +15,9 @@ namespace sps.Domain.Model.Models
         public Guid PeriodId { get; set; }
         public PeriodModel Period { get; set; }
         
+        // Update property names to be consistent with entity
         [Required]
-        public Guid EducationId { get; set; }
-        public EducationModel Education { get; set; }
+        public Guid EducationalProgramId { get; set; }
+        public EducationalProgramModel EducationalProgram { get; set; }
     }
 }

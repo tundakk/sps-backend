@@ -13,7 +13,5 @@ namespace sps.BLL.Services.Implementations
             : base(spsaCaseRepo, logger)
         {
         }
-
-        // Implement any additional methods specific to SpsaCase here
     }
 }

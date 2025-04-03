@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using sps.API.Controllers.Base;
 using sps.BLL;
+using sps.BLL.Email;
 using sps.BLL.Services.Interfaces;
+using sps.BLL.SMS;
 using sps.Domain.Model.Dtos;
 using sps.Domain.Model.Responses;
 using System.Security.Claims;
@@ -22,26 +25,31 @@ namespace sps.API.Controllers.Implementations
         private readonly SignInManager<IdentityUser<Guid>> _signInManager;
         private readonly JwtSettings _jwtSettings;
         private readonly IJwtTokenService _jwtTokenService;
+        private readonly ISMSService _smsService;
+        private readonly IMemoryCache _cache;
+        // private readonly IEmailSender<IdentityUser<Guid>> _emailSender; // Add this line
+private readonly IExtendedEmailSender<IdentityUser<Guid>> _emailSender;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthController"/> class.
         /// </summary>
-        /// <param name="logger">The logger instance.</param>
-        /// <param name="userManager">The user manager instance.</param>
-        /// <param name="signInManager">The sign-in manager instance.</param>
-        /// <param name="jwtSettings">The JWT settings.</param>
-        /// <param name="jwtTokenService">The JWT token service.</param>
         public AuthController(
             ILogger<AuthController> logger,
             UserManager<IdentityUser<Guid>> userManager,
             SignInManager<IdentityUser<Guid>> signInManager,
             IOptions<JwtSettings> jwtSettings,
-            IJwtTokenService jwtTokenService) : base(logger)
+            IJwtTokenService jwtTokenService,
+            ISMSService smsService,
+            IMemoryCache cache,
+               IExtendedEmailSender<IdentityUser<Guid>> emailSender) : base(logger) // Add emailSender parameter
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtSettings = jwtSettings.Value;
             _jwtTokenService = jwtTokenService;
+            _smsService = smsService;
+            _cache = cache;
+            _emailSender = emailSender; // Add this line
         }
 
         /// <summary>
@@ -117,34 +125,31 @@ namespace sps.API.Controllers.Implementations
                 {
                     UserName = registerDto.Email,
                     Email = registerDto.Email,
-                    EmailConfirmed = false // Set to true if you don't need email confirmation
+                    EmailConfirmed = false // Email not confirmed until verification
                 };
 
                 var result = await _userManager.CreateAsync(user, registerDto.Password);
-                
+
                 if (result.Succeeded)
                 {
                     // Assign default role
-                    await _userManager.AddToRoleAsync(user, "user");
-                    
-                    // Generate token using token service
-                    var roles = new[] { "user" };
-                    var token = _jwtTokenService.GenerateJwtToken(user, roles);
+                    await _userManager.AddToRoleAsync(user, "User");
 
-                    // Return the token and user info
-                    var response = new AuthResponseDto
-                    {
-                        Token = token,
-                        ExpiresIn = _jwtSettings.ExpirationInMinutes * 60,
-                        UserId = user.Id.ToString(),
-                        Email = user.Email ?? string.Empty,
-                        UserName = user.UserName ?? string.Empty,
-                        Roles = roles
-                    };
+                    // Generate email verification code
+                    var code = Random.Shared.Next(100000, 1000000).ToString("D6");
+                    var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(24));
+                    _cache.Set($"EmailVerification_{user.Email}", code, cacheOptions);
 
-                    return Ok(ServiceResponse<AuthResponseDto>.CreateSuccess(response));
+                    // Send verification email
+                    await _emailSender.SendConfirmationCodeAsync(user, user.Email ?? registerDto.Email, code);
+
+                    return Ok(ServiceResponse<object>.CreateSuccess(new { 
+                        message = "Registration successful. Please check your email to verify your account.",
+                        requiresEmailVerification = true,
+                        email = user.Email
+                    }));
                 }
-                
+
                 // If registration failed, return the errors
                 var errors = result.Errors.Select(e => e.Description).ToList();
                 return BadRequest(ServiceResponse<object>.CreateError("Registration failed: " + string.Join(", ", errors), "REGISTRATION_FAILED"));
@@ -300,6 +305,196 @@ namespace sps.API.Controllers.Implementations
         public IActionResult GetCsrfToken()
         {
             return Ok(new { csrfToken = Guid.NewGuid().ToString() });
+        }
+
+        /// <summary>
+        /// Initiates two-factor authentication by sending an SMS code
+        /// </summary>
+        [HttpPost("login-2fa-init")]
+        [AllowAnonymous]
+        public async Task<IActionResult> InitTwoFactorLogin([FromBody] LoginDto loginDto)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(loginDto.Email);
+                if (user == null)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("Invalid login attempt", "INVALID_CREDENTIALS"));
+                }
+
+                var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+                if (!result.Succeeded)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("Invalid login attempt", "INVALID_CREDENTIALS"));
+                }
+
+                if (string.IsNullOrEmpty(user.PhoneNumber))
+                {
+                    return BadRequest(ServiceResponse<object>.CreateError("User does not have a phone number for 2FA", "NO_PHONE_NUMBER"));
+                }
+
+                var code = Random.Shared.Next(1000, 10000).ToString("D4");
+                var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+                _cache.Set($"2FA_{user.Email}", code, cacheOptions);
+
+                _smsService.SendSMS(user.PhoneNumber, $"Your verification code is: {code}");
+                return Ok(ServiceResponse<object>.CreateSuccess(new { message = "Verification code sent to your phone" }));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error during two-factor authentication initialization");
+                return StatusCode(500, ServiceResponse<object>.CreateError("An error occurred", "SERVER_ERROR"));
+            }
+        }
+
+        /// <summary>
+        /// Completes two-factor authentication by verifying the SMS code
+        /// </summary>
+        [HttpPost("verify-code")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyCode([FromBody] VerifyCodeDto verifyCodeDto)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(verifyCodeDto.Email);
+                if (user == null)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("User not found", "USER_NOT_FOUND"));
+                }
+
+                if (!_cache.TryGetValue($"2FA_{user.Email}", out string? storedCode))
+                {
+                    return BadRequest(ServiceResponse<object>.CreateError("Verification code has expired", "CODE_EXPIRED"));
+                }
+
+                if (verifyCodeDto.Code != storedCode)
+                {
+                    return BadRequest(ServiceResponse<object>.CreateError("Invalid verification code", "INVALID_CODE"));
+                }
+
+                _cache.Remove($"2FA_{user.Email}");
+
+                var roles = await _userManager.GetRolesAsync(user);
+                var token = _jwtTokenService.GenerateJwtToken(user, roles);
+
+                var response = new AuthResponseDto
+                {
+                    Token = token,
+                    ExpiresIn = _jwtSettings.ExpirationInMinutes * 60,
+                    UserId = user.Id.ToString(),
+                    Email = user.Email ?? string.Empty,
+                    UserName = user.UserName ?? string.Empty,
+                    Roles = roles.ToArray()
+                };
+
+                return Ok(ServiceResponse<AuthResponseDto>.CreateSuccess(response));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error during code verification");
+                return StatusCode(500, ServiceResponse<object>.CreateError("An error occurred", "SERVER_ERROR"));
+            }
+        }
+
+        /// <summary>
+        /// Verifies the email address of a user using the verification code
+        /// </summary>
+        /// <param name="verifyEmailDto">The email and verification code</param>
+        /// <returns>JWT token and user information upon successful verification</returns>
+        [HttpPost("verify-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto verifyEmailDto)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(verifyEmailDto.Email);
+                if (user == null)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("User not found", "USER_NOT_FOUND"));
+                }
+
+                if (!_cache.TryGetValue($"EmailVerification_{user.Email}", out string? storedCode))
+                {
+                    return BadRequest(ServiceResponse<object>.CreateError("Verification code has expired", "CODE_EXPIRED"));
+                }
+
+                if (verifyEmailDto.Code != storedCode)
+                {
+                    return BadRequest(ServiceResponse<object>.CreateError("Invalid verification code", "INVALID_CODE"));
+                }
+
+                // Remove the code from cache
+                _cache.Remove($"EmailVerification_{user.Email}");
+
+                // Set email as confirmed
+                user.EmailConfirmed = true;
+                await _userManager.UpdateAsync(user);
+
+                // Get user roles
+                var roles = await _userManager.GetRolesAsync(user);
+
+                // Generate token using token service
+                var token = _jwtTokenService.GenerateJwtToken(user, roles);
+
+                // Return the token and user info
+                var response = new AuthResponseDto
+                {
+                    Token = token,
+                    ExpiresIn = _jwtSettings.ExpirationInMinutes * 60,
+                    UserId = user.Id.ToString(),
+                    Email = user.Email ?? string.Empty,
+                    UserName = user.UserName ?? string.Empty,
+                    Roles = roles.ToArray()
+                };
+
+                return Ok(ServiceResponse<AuthResponseDto>.CreateSuccess(response));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error during email verification");
+                return StatusCode(500, ServiceResponse<object>.CreateError("An error occurred", "SERVER_ERROR"));
+            }
+        }
+
+        /// <summary>
+        /// Resends the email verification code
+        /// </summary>
+        /// <param name="resendEmailDto">The email to resend the code to</param>
+        /// <returns>Success message if code was sent</returns>
+        [HttpPost("resend-verification")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendEmailVerificationDto resendEmailDto)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(resendEmailDto.Email);
+                if (user == null)
+                {
+                    return Unauthorized(ServiceResponse<object>.CreateError("User not found", "USER_NOT_FOUND"));
+                }
+
+                if (user.EmailConfirmed)
+                {
+                    return BadRequest(ServiceResponse<object>.CreateError("Email is already verified", "EMAIL_ALREADY_VERIFIED"));
+                }
+
+                // Generate new email verification code
+                var code = Random.Shared.Next(100000, 1000000).ToString("D6");
+                var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromHours(24));
+                _cache.Set($"EmailVerification_{user.Email}", code, cacheOptions);
+
+                // Send verification email
+                await _emailSender.SendConfirmationCodeAsync(user, user.Email ?? resendEmailDto.Email, code);
+
+                return Ok(ServiceResponse<object>.CreateSuccess(new { 
+                    message = "Verification code has been sent to your email" 
+                }));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error resending verification email");
+                return StatusCode(500, ServiceResponse<object>.CreateError("An error occurred", "SERVER_ERROR"));
+            }
         }
     }
 }

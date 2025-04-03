@@ -16,35 +16,26 @@ namespace sps.DAL.Configurations
 
         public void Configure(EntityTypeBuilder<TeacherPayment> builder)
         {
-            builder.HasKey(tp => tp.Id);
-            
-            builder.Property(tp => tp.Date)
+            builder.HasKey(e => e.Id);
+
+            builder.Property(e => e.Date)
                 .IsRequired();
-            
-            builder.Property(tp => tp.Amount)
+
+            builder.Property(e => e.Amount)
                 .IsRequired()
-                .HasPrecision(18, 2);
+                .HasColumnType("decimal(18,2)");
 
-            builder.Property(tp => tp.VoucherText)
-                .IsRequired(false);
+            builder.Property(e => e.ExternalVoucherNumber);
 
-            builder.Property(tp => tp.CompleteVoucherText)
-                .IsRequired(false);
+            // Relationships
+            builder.HasOne(e => e.SupportType)
+                .WithMany()
+                .HasForeignKey(e => e.SupportTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Property(tp => tp.ExternalVoucherNumber)
-                .IsRequired(false);
-
-            // Configure relationship with SupportType
-            builder.HasOne(tp => tp.SupportType)
-                .WithMany(st => st.TeacherPayments)
-                .HasForeignKey(tp => tp.SupportTypeId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // Configure relationship with Comments
-            builder.HasMany(tp => tp.Comments)
+            builder.HasMany(e => e.Comments)
                 .WithOne(c => c.TeacherPayment)
-                .HasForeignKey(c => c.TeacherPaymentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(c => c.TeacherPaymentId);
         }
     }
 }

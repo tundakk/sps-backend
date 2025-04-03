@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using sps.API.Controllers.Base;
 using sps.BLL.Services.Interfaces;
 using sps.Domain.Model.Models;
-using Mapster;
-using sps.Domain.Model.Responses;
 
 namespace sps.API.Controllers.Implementations
 {
@@ -72,7 +70,7 @@ namespace sps.API.Controllers.Implementations
             try
             {
                 var response = await _eduCategoryService.InsertAsync(model);
-                return CreatedResponse(response, nameof(GetByIdAsync), 
+                return CreatedResponse(response, nameof(GetByIdAsync),
                     new { id = response.Data?.Id ?? Guid.Empty });
             }
             catch (Exception ex)
@@ -139,7 +137,7 @@ namespace sps.API.Controllers.Implementations
                 }
 
                 var category = response.Data;
-                return Ok(category.Educations);
+                return Ok(category.EducationalPrograms);
             }
             catch (Exception ex)
             {

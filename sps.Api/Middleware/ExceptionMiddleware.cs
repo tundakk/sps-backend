@@ -1,6 +1,6 @@
+using sps.Domain.Model.Responses;
 using System.Net;
 using System.Text.Json;
-using sps.Domain.Model.Responses;
 
 namespace sps.API.Middleware
 {

@@ -20,14 +20,14 @@ namespace sps.DAL.Configurations
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasOne(epr => epr.Education)
+            builder.HasOne(epr => epr.EducationalProgram)
                 .WithMany(e => e.EducationPeriodRates)
-                .HasForeignKey(epr => epr.EducationId)
+                .HasForeignKey(epr => epr.EducationalProgramId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Add a unique constraint for the combination of PeriodId and EducationId
-            builder.HasIndex(epr => new { epr.PeriodId, epr.EducationId }).IsUnique();
+            // Add a unique constraint for the combination of PeriodId and EducationalProgramId
+            builder.HasIndex(epr => new { epr.PeriodId, epr.EducationalProgramId }).IsUnique();
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace sps.Domain.Model.Entities
+﻿using System;
+
+namespace sps.Domain.Model.Entities
 {
     public class EducationPeriodRate
     {
@@ -7,10 +9,10 @@
 
         // FKs
         public Guid PeriodId { get; set; }
-
         public Period Period { get; set; }
 
-        public Guid EducationId { get; set; }
-        public Education Education { get; set; }
+        // Update property names to be consistent
+        public Guid EducationalProgramId { get; set; }
+        public EducationalProgram EducationalProgram { get; set; }
     }
 }

@@ -12,7 +12,7 @@ namespace sps.API.Middleware
         {
             return builder.UseMiddleware<JwtMiddleware>();
         }
-        
+
         /// <summary>
         /// Adds the global exception handler middleware to the application pipeline
         /// </summary>

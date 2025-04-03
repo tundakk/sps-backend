@@ -2,9 +2,11 @@ namespace sps.BLL.Services.Interfaces
 {
     using sps.BLL.Services.Base;
     using sps.Domain.Model.Models;
+    using sps.Domain.Model.Responses;
+    using sps.Domain.Model.ValueObjects;
 
     public interface IStudentService : IBaseService<StudentModel>
     {
-        // Add any additional methods specific to Student if needed
+        public Task<ServiceResponse<StudentModel>> GetByCprAsync(CPRNumber cprNumber);
     }
 }

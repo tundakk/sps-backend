@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using sps.Domain.Model.Responses;
 
 namespace sps.API.Controllers.Base
@@ -9,8 +8,6 @@ namespace sps.API.Controllers.Base
     /// </summary>
     /// <typeparam name="T">The type of the controller.</typeparam>
     [ApiController]
-    [Route("api/[controller]")]
-    [Authorize(Roles = "user,admin")]
     public abstract class BaseController<T> : ControllerBase
     {
         /// <summary>
@@ -35,20 +32,20 @@ namespace sps.API.Controllers.Base
         protected IActionResult HandleError(Exception ex)
         {
             Logger.LogError(ex, ex.Message);
-            
+
             var response = ServiceResponse<object>.CreateError(
                 "An unexpected error occurred. Please try again later.",
                 "INTERNAL_SERVER_ERROR");
-                
+
             // Add technical details in development environment
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 response.TechnicalDetails = $"{ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}";
             }
-            
+
             return StatusCode(500, response);
         }
-        
+
         /// <summary>
         /// Processes and returns the appropriate result based on the service response.
         /// </summary>
@@ -59,7 +56,7 @@ namespace sps.API.Controllers.Base
         {
             return this.ToActionResult(response);
         }
-        
+
         /// <summary>
         /// Creates a result for newly created resources.
         /// </summary>

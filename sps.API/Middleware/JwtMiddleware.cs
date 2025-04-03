@@ -1,6 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
 using sps.BLL.Services.Interfaces;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace sps.API.Middleware
@@ -37,7 +35,7 @@ namespace sps.API.Middleware
                     // Create a scope to resolve the JwtTokenService
                     using var scope = context.RequestServices.CreateScope();
                     var jwtTokenService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
-                    
+
                     if (jwtTokenService.ValidateToken(token))
                     {
                         // Token is valid, attach the claims to the current request
