@@ -1,11 +1,9 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace sps.Domain.Model.ValueObjects
 {
-    [ComplexType]
     public sealed class SensitiveString
     {
         private string _value;
@@ -14,17 +12,17 @@ namespace sps.Domain.Model.ValueObjects
         public string Value 
         { 
             get => _value;
-            private set => _value = value ?? throw new ArgumentNullException(nameof(value));
+            private init => _value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         // Empty constructor for EF Core
-        protected SensitiveString() { }
+        private SensitiveString() { }
 
         [JsonConstructor]
         public SensitiveString(string value)
         {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
+            if (string.IsNullOrEmpty(value))
+                throw new ArgumentNullException(nameof(value), "Sensitive string cannot be null or empty");
 
             _value = value;
         }

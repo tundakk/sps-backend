@@ -34,11 +34,10 @@ namespace sps.API
             var eduStatuses = await SeedEduStatusesAsync(context);
             var supportTypes = await SeedSupportTypesAsync(context);
             var periods = await SeedPeriodsAsync(context);
-            var places = await SeedPlacesAsync(context);
-            var educations = await SeedEducationsAsync(context, eduCategories);
-            var educationPeriodRates = await SeedEducationPeriodRatesAsync(context, educations, periods);
-            var supportingTeachers = await SeedSupportingTeachersAsync(context, places);
-            var students = await SeedStudentsAsync(context, educations, periods);
+            var educationalPrograms = await SeedEducationalProgramsAsync(context, eduCategories);
+            var educationPeriodRates = await SeedEducationPeriodRatesAsync(context, educationalPrograms, periods);
+            var supportingTeachers = await SeedSupportingTeachersAsync(context, educationalPrograms);
+            var students = await SeedStudentsAsync(context, educationalPrograms, periods);
             var opkvalSupervisions = await SeedOpkvalSupervisionsAsync(context);
             var teacherPayments = await SeedTeacherPaymentsAsync(context, supportTypes);
             var studentPayments = await SeedStudentPaymentsAsync(context, supportTypes);
@@ -97,7 +96,7 @@ namespace sps.API
                 Email = "user3@example.com",
                 NormalizedUserName = "USER3@EXAMPLE.COM",
                 NormalizedEmail = "USER3@EXAMPLE.COM",
-                EmailConfirmed = true,
+                EmailConfirmed = false,
                 PhoneNumber = "33333333"
             };
 
@@ -132,10 +131,9 @@ namespace sps.API
 
             var eduCategories = new List<EduCategory>
             {
-                new() { Id = Guid.NewGuid(), Name = "Vocational" },
-                new() { Id = Guid.NewGuid(), Name = "Academic" },
-                new() { Id = Guid.NewGuid(), Name = "Technical" },
-                new() { Id = Guid.NewGuid(), Name = "Professional" }
+                new() { Id = Guid.NewGuid(), Name = "Professionsbachelor" },
+                new() { Id = Guid.NewGuid(), Name = "Erhvervsakademiuddannelse" },
+                new() { Id = Guid.NewGuid(), Name = "Ungdomsuddannelse" },
             };
 
             await context.EduCategories.AddRangeAsync(eduCategories);
@@ -152,13 +150,18 @@ namespace sps.API
 
             var diagnoses = new List<Diagnosis>
             {
-                new() { Id = Guid.NewGuid(), Name = "ADHD" },
-                new() { Id = Guid.NewGuid(), Name = "Dyslexia" },
-                new() { Id = Guid.NewGuid(), Name = "Dyscalculia" },
-                new() { Id = Guid.NewGuid(), Name = "Autism Spectrum Disorder" },
-                new() { Id = Guid.NewGuid(), Name = "Anxiety Disorder" }
+                new() { Id = Guid.NewGuid(), Name = "Andet" },
+                new() { Id = Guid.NewGuid(), Name = "Bevægehandicap" },
+                new() { Id = Guid.NewGuid(), Name = "Generelle indlæringsvanskeligheder" },
+                new() { Id = Guid.NewGuid(), Name = "Hørenedsættelse" },
+                new() { Id = Guid.NewGuid(), Name = "Kronisk eller langvarig sygdom" },
+                new() { Id = Guid.NewGuid(), Name = "Læse- skrivevanskeligheder" },
+                new() { Id = Guid.NewGuid(), Name = "Matematikvanskeligheder" },
+                new() { Id = Guid.NewGuid(), Name = "Neurologisk betinget funktionsnedsættelse" },
+                new() { Id = Guid.NewGuid(), Name = "Psykisk funktionsnedsættelse el. udviklingsforstyrrelse" },
+                new() { Id = Guid.NewGuid(), Name = "Sprog- og talevanskeligheder" },
+                new() { Id = Guid.NewGuid(), Name = "Synsnedsættelse" }
             };
-
             await context.Diagnoses.AddRangeAsync(diagnoses);
             await context.SaveChangesAsync();
             return diagnoses;
@@ -173,10 +176,12 @@ namespace sps.API
 
             var eduStatuses = new List<EduStatus>
             {
-                new() { Id = Guid.NewGuid(), Name = "Active" },
-                new() { Id = Guid.NewGuid(), Name = "On Hold" },
-                new() { Id = Guid.NewGuid(), Name = "Completed" },
-                new() { Id = Guid.NewGuid(), Name = "Withdrawn" }
+                new() { Id = Guid.NewGuid(), Name = "Afbrudt" },
+                new() { Id = Guid.NewGuid(), Name = "Aktiv" },
+                new() { Id = Guid.NewGuid(), Name = "Gennemført" },
+                new() { Id = Guid.NewGuid(), Name = "Inaktiv-SPS" },
+                new() { Id = Guid.NewGuid(), Name = "Orlov" },
+                new() { Id = Guid.NewGuid(), Name = "Syg" }
             };
 
             await context.EduStatuses.AddRangeAsync(eduStatuses);
@@ -193,10 +198,12 @@ namespace sps.API
 
             var supportTypes = new List<SupportType>
             {
-                new() { Id = Guid.NewGuid(), Name = "Academic Support" },
-                new() { Id = Guid.NewGuid(), Name = "Behavioral Support" },
-                new() { Id = Guid.NewGuid(), Name = "Emotional Support" },
-                new() { Id = Guid.NewGuid(), Name = "Physical Support" }
+                new() { Id = Guid.NewGuid(), Name = "Interne støttetimer" },
+                new() { Id = Guid.NewGuid(), Name = "Interne støttetimer (inkl. opkvalificering og supervision)" },
+                new() { Id = Guid.NewGuid(), Name = "Interne støttetimer (instruktion)" },
+                new() { Id = Guid.NewGuid(), Name = "Interne støttetimer (ekstern konsulent)" },
+                new() { Id = Guid.NewGuid(), Name = "Interne støttetimer (PAU læse-skrive)" },
+                new() { Id = Guid.NewGuid(), Name = "Interne støttetimer (PAU andet)" }
             };
 
             await context.SupportTypes.AddRangeAsync(supportTypes);
@@ -213,10 +220,12 @@ namespace sps.API
 
             var periods = new List<Period>
             {
-                new() { Id = Guid.NewGuid(), Name = "Spring 23" },
-                new() { Id = Guid.NewGuid(), Name = "Fall 23" },
-                new() { Id = Guid.NewGuid(), Name = "Spring 24" },
-                new() { Id = Guid.NewGuid(), Name = "Fall 24" }
+                new() { Id = Guid.NewGuid(), Name = "Forår 23" },
+                new() { Id = Guid.NewGuid(), Name = "Efterår 23" },
+                new() { Id = Guid.NewGuid(), Name = "Forår 24" },
+                new() { Id = Guid.NewGuid(), Name = "Efterår 24" },
+                new() { Id = Guid.NewGuid(), Name = "Forår 25" },
+                new() { Id = Guid.NewGuid(), Name = "Efterår 25" }
             };
 
             await context.Periods.AddRangeAsync(periods);
@@ -224,46 +233,88 @@ namespace sps.API
             return periods;
         }
 
-        private static async Task<List<Place>> SeedPlacesAsync(SpsDbContext context)
+        private static async Task<List<EducationalProgram>> SeedEducationalProgramsAsync(SpsDbContext context, List<EduCategory> eduCategories)
         {
-            if (await context.Places.AnyAsync())
+            if (await context.EducationalPrograms.AnyAsync())
             {
-                return await context.Places.ToListAsync();
+                return await context.EducationalPrograms.ToListAsync();
             }
 
-            var places = new List<Place>
+            var programs = new List<EducationalProgram>
             {
-                new() { Id = Guid.NewGuid(), Name = "Main Campus", PlaceNumber = "MC001", Alias = "Main" },
-                new() { Id = Guid.NewGuid(), Name = "Downtown Campus", PlaceNumber = "DC002", Alias = "Downtown" },
-                new() { Id = Guid.NewGuid(), Name = "North Campus", PlaceNumber = "NC003", Alias = "North" }
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Sundhedsadminitrativ koordinator", 
+                    ProgramCode = "MC001", 
+                    Alias = "Main",
+                    EduCategoryId = eduCategories[0].Id,
+                    EduCategory = eduCategories[0]
+                },
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Administrationsbachelor", 
+                    ProgramCode = "AB001", 
+                    Alias = "Admin",
+                    EduCategoryId = eduCategories[0].Id,
+                    EduCategory = eduCategories[0]
+                },
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Administrationsøkonom", 
+                    ProgramCode = "AO001", 
+                    Alias = "AØ",
+                    EduCategoryId = eduCategories[1].Id,
+                    EduCategory = eduCategories[1]
+                },
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Bioanalytiker", 
+                    ProgramCode = "BA001", 
+                    Alias = "BIO",
+                    EduCategoryId = eduCategories[0].Id,
+                    EduCategory = eduCategories[0]
+                },
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Ergoterapeut", 
+                    ProgramCode = "ET001", 
+                    Alias = "ERGO",
+                    EduCategoryId = eduCategories[0].Id,
+                    EduCategory = eduCategories[0]
+                },
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Ernæring og sundhed", 
+                    ProgramCode = "ES001", 
+                    Alias = "E&S",
+                    EduCategoryId = eduCategories[0].Id,
+                    EduCategory = eduCategories[0]
+                },
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Fysioterapeut (Hillerød)", 
+                    ProgramCode = "FH001", 
+                    Alias = "FYSH",
+                    EduCategoryId = eduCategories[0].Id,
+                    EduCategory = eduCategories[0]
+                },
+                new() { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Fysioterapeut (Nørrebro)", 
+                    ProgramCode = "FN001", 
+                    Alias = "FYSN",
+                    EduCategoryId = eduCategories[0].Id,
+                    EduCategory = eduCategories[0]
+                }
+                // Add the rest of your educational programs as needed
             };
 
-            await context.Places.AddRangeAsync(places);
+            await context.EducationalPrograms.AddRangeAsync(programs);
             await context.SaveChangesAsync();
-            return places;
+            return programs;
         }
 
-        private static async Task<List<Education>> SeedEducationsAsync(SpsDbContext context, List<EduCategory> eduCategories)
-        {
-            if (await context.Educations.AnyAsync())
-            {
-                return await context.Educations.ToListAsync();
-            }
-
-            var educations = new List<Education>
-            {
-                new() { Id = Guid.NewGuid(), Name = "Computer Science", EduCategoryId = eduCategories[0].Id, EduCategory = eduCategories[0] },
-                new() { Id = Guid.NewGuid(), Name = "Business Administration", EduCategoryId = eduCategories[1].Id, EduCategory = eduCategories[1] },
-                new() { Id = Guid.NewGuid(), Name = "Mechanical Engineering", EduCategoryId = eduCategories[2].Id, EduCategory = eduCategories[2] },
-                new() { Id = Guid.NewGuid(), Name = "Nursing", EduCategoryId = eduCategories[3].Id, EduCategory = eduCategories[3] }
-            };
-
-            await context.Educations.AddRangeAsync(educations);
-            await context.SaveChangesAsync();
-            return educations;
-        }
-
-        private static async Task<List<EducationPeriodRate>> SeedEducationPeriodRatesAsync(SpsDbContext context, List<Education> educations, List<Period> periods)
+        private static async Task<List<EducationPeriodRate>> SeedEducationPeriodRatesAsync(SpsDbContext context, List<EducationalProgram> educationalPrograms, List<Period> periods)
         {
             if (await context.EducationPeriodRates.AnyAsync())
             {
@@ -273,15 +324,15 @@ namespace sps.API
             var rates = new List<EducationPeriodRate>();
 
             // Create rates for each education and period combination
-            foreach (var education in educations)
+            foreach (var program in educationalPrograms)
             {
                 foreach (var period in periods)
                 {
                     rates.Add(new EducationPeriodRate
                     {
                         Id = Guid.NewGuid(),
-                        EducationId = education.Id,
-                        Education = education,
+                        EducationalProgramId = program.Id,
+                        EducationalProgram = program,
                         PeriodId = period.Id,
                         Period = period,
                         Amount = 100.00m + (decimal)Random.Shared.NextDouble() * 50.00m
@@ -294,7 +345,7 @@ namespace sps.API
             return rates;
         }
 
-        private static async Task<List<SupportingTeacher>> SeedSupportingTeachersAsync(SpsDbContext context, List<Place> places)
+        private static async Task<List<SupportingTeacher>> SeedSupportingTeachersAsync(SpsDbContext context, List<EducationalProgram> educationalPrograms)
         {
             if (await context.SupportingTeachers.AnyAsync())
             {
@@ -308,21 +359,21 @@ namespace sps.API
                     Id = Guid.NewGuid(),
                     Name = "John Smith",
                     Email = new SensitiveString("john.smith@example.com"),
-                    PlacesId = places[0].Id
+                    EducationalProgramId = educationalPrograms[0].Id
                 },
                 new()
                 {
                     Id = Guid.NewGuid(),
                     Name = "Jane Doe",
                     Email = new SensitiveString("jane.doe@example.com"),
-                    PlacesId = places[1].Id
+                    EducationalProgramId = educationalPrograms[1].Id
                 },
                 new()
                 {
                     Id = Guid.NewGuid(),
                     Name = "Michael Johnson",
                     Email = new SensitiveString("michael.johnson@example.com"),
-                    PlacesId = places[2].Id
+                    EducationalProgramId = educationalPrograms[2].Id
                 }
             };
 
@@ -331,7 +382,7 @@ namespace sps.API
             return teachers;
         }
 
-        private static async Task<List<Student>> SeedStudentsAsync(SpsDbContext context, List<Education> educations, List<Period> periods)
+        private static async Task<List<Student>> SeedStudentsAsync(SpsDbContext context, List<EducationalProgram> educationalPrograms, List<Period> periods)
         {
             if (await context.Students.AnyAsync())
             {
@@ -356,8 +407,10 @@ namespace sps.API
                     CreatedAt = DateTime.UtcNow
                 }
             },
-            EducationId = educations[0].Id,
-            StartPeriodId = periods[0].Id
+            EducationalProgramId = educationalPrograms[0].Id,
+            StartPeriodId = periods[0].Id,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         },
         new()
         {
@@ -366,7 +419,7 @@ namespace sps.API
             CPRNumber = new CPRNumber("2222222222"),
             Name = new SensitiveString("Sam Williams"),
             Comments = new List<Comment>(),
-            EducationId = educations[1].Id,
+            EducationalProgramId = educationalPrograms[1].Id,
             StartPeriodId = periods[0].Id
         },
         new()
@@ -385,7 +438,7 @@ namespace sps.API
                     CreatedAt = DateTime.UtcNow
                 }
             },
-            EducationId = educations[2].Id,
+            EducationalProgramId = educationalPrograms[2].Id,
             StartPeriodId = periods[1].Id
         },
         new()
@@ -395,7 +448,7 @@ namespace sps.API
             CPRNumber = new CPRNumber("4444444444"),
             Name = new SensitiveString("Jordan Smith"),
             Comments = new List<Comment>(),
-            EducationId = educations[3].Id,
+            EducationalProgramId = educationalPrograms[3].Id,
             StartPeriodId = periods[1].Id,
             FinishedDate = DateTime.UtcNow.AddMonths(3)
         }
@@ -418,7 +471,7 @@ namespace sps.API
                 new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.Godkendt },
                 new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.StuderendeGiveSamtykke },
                 new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.AfventerSTUK },
-                new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.AnulleretSTUK }
+                new() { Id = Guid.NewGuid(), CreateDate = DateTime.UtcNow, Status = Domain.Model.Entities.OpkvalSupervisionStatus.AfventerSTUK }
             };
 
             await context.OpkvalSupervisions.AddRangeAsync(supervisions);

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using sps.Domain.Model.Responses;
 
 namespace sps.API.Controllers.Base
@@ -9,7 +8,6 @@ namespace sps.API.Controllers.Base
     /// </summary>
     /// <typeparam name="T">The type of the controller.</typeparam>
     [ApiController]
-    [Authorize(Roles = "Admin,User")]
     public abstract class BaseController<T> : ControllerBase
     {
         /// <summary>

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using sps.DAL.Configurations.Extensions;
 using sps.Domain.Model.Entities;
 using sps.Domain.Model.Services;
 
@@ -16,39 +17,31 @@ namespace sps.DAL.Configurations
 
         public void Configure(EntityTypeBuilder<StudentPayment> builder)
         {
-            builder.HasKey(sp => sp.Id);
-            
-            builder.Property(sp => sp.Date)
+            builder.HasKey(e => e.Id);
+
+            builder.Property(e => e.Date)
                 .IsRequired();
-            
-            builder.Property(sp => sp.Amount)
+
+            // Apply encryption to AccountNumber
+            builder.Property(e => e.AccountNumber)
                 .IsRequired()
-                .HasPrecision(18, 2);
+                .UseEncryption(_encryptionService);
 
-            builder.Property(sp => sp.AccountNumber)
-                .UseEncryption(_encryptionService)
-                .IsRequired();
+            builder.Property(e => e.Amount)
+                .IsRequired()
+                .HasColumnType("decimal(18,2)");
 
-            builder.Property(sp => sp.VoucherText)
-                .IsRequired(false);
+            builder.Property(e => e.ExternalVoucherNumber);
 
-            builder.Property(sp => sp.CompleteVoucherText)
-                .IsRequired(false);
+            // Relationships
+            builder.HasOne(e => e.SupportType)
+                .WithMany()
+                .HasForeignKey(e => e.SupportTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Property(sp => sp.ExternalVoucherNumber)
-                .IsRequired(false);
-
-            // Configure relationship with SupportType
-            builder.HasOne(sp => sp.SupportType)
-                .WithMany(st => st.StudentPayments)
-                .HasForeignKey(sp => sp.SupportTypeId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // Configure relationship with Comments
-            builder.HasMany(sp => sp.Comments)
+            builder.HasMany(e => e.Comments)
                 .WithOne(c => c.StudentPayment)
-                .HasForeignKey(c => c.StudentPaymentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(c => c.StudentPaymentId);
         }
     }
 }

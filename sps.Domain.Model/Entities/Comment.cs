@@ -22,8 +22,13 @@ namespace sps.Domain.Model.Entities
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+       /// <summary>
+        /// The unique identifier of the user who created this comment
+        /// </summary>
+        public Guid? CreatedByUserId { get; set; }
+
         /// <summary>
-        /// The user who created this comment
+        /// The username or display name of the user who created this comment
         /// </summary>
         public string? CreatedBy { get; set; }
 

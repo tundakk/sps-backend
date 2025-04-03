@@ -33,11 +33,16 @@ namespace sps.DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("EntityType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<Guid?>("OpkvalSupervisionId")
                         .HasColumnType("uniqueidentifier");
@@ -60,7 +65,8 @@ namespace sps.DAL.Migrations
 
                             b1.Property<string>("Value")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("nvarchar(max)")
+                                .HasColumnName("CommentText");
                         });
 
                     b.HasKey("Id");
@@ -75,7 +81,10 @@ namespace sps.DAL.Migrations
 
                     b.HasIndex("TeacherPaymentId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", t =>
+                        {
+                            t.HasCheckConstraint("CK_Comment_SingleEntity", "CASE WHEN SpsaCaseId IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN StudentId IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN TeacherPaymentId IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN StudentPaymentId IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN OpkvalSupervisionId IS NOT NULL THEN 1 ELSE 0 END = 1");
+                        });
                 });
 
             modelBuilder.Entity("sps.Domain.Model.Entities.Diagnosis", b =>
@@ -340,6 +349,9 @@ namespace sps.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid?>("EducationId")
                         .HasColumnType("uniqueidentifier");
 
@@ -356,6 +368,9 @@ namespace sps.DAL.Migrations
                     b.Property<string>("StudentNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -497,18 +512,15 @@ namespace sps.DAL.Migrations
 
                     b.HasOne("sps.Domain.Model.Entities.Student", "Student")
                         .WithMany("Comments")
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("StudentId");
 
                     b.HasOne("sps.Domain.Model.Entities.StudentPayment", "StudentPayment")
                         .WithMany("Comments")
-                        .HasForeignKey("StudentPaymentId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("StudentPaymentId");
 
                     b.HasOne("sps.Domain.Model.Entities.TeacherPayment", "TeacherPayment")
                         .WithMany("Comments")
-                        .HasForeignKey("TeacherPaymentId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("TeacherPaymentId");
 
                     b.Navigation("OpkvalSupervision");
 

@@ -23,8 +23,9 @@ namespace sps.Domain.Model.Models
         [EmailAddress]
         public required SensitiveString Email { get; set; }
         
-        public Guid? PlacesId { get; set; }
-        public PlaceModel? Place { get; set; }
+        // Replace PlacesId with EducationalProgramId
+        public Guid? EducationalProgramId { get; set; }
+        public EducationalProgramModel? EducationalProgram { get; set; }
         
         public ICollection<SpsaCaseModel> SpsaCases { get; init; }
     }

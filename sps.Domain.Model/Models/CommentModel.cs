@@ -46,5 +46,10 @@ namespace sps.Domain.Model.Models
         /// Optional display name for the related entity
         /// </summary>
         public string? EntityName { get; set; }
+
+        /// <summary>
+        /// The unique identifier of the user who created this comment
+        /// </summary>
+        public Guid? CreatedByUserId { get; set; }
     }
 }

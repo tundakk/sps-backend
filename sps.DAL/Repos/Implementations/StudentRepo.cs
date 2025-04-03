@@ -19,5 +19,11 @@ namespace sps.DAL.Repos.Implementations
                 .Include(s => s.Comments)
                 .FirstOrDefaultAsync(s => s.CPRNumber == cprNumber);
         }
+
+        public override async Task<Student> UpdateAsync(Student entity)
+        {
+            entity.UpdatedAt = DateTime.UtcNow;
+            return await base.UpdateAsync(entity);
+        }
     }
 }

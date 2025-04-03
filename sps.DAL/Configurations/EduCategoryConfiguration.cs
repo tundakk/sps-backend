@@ -13,8 +13,8 @@ namespace sps.DAL.Configurations
             // Configure properties
             builder.Property(ec => ec.Name).IsRequired();
 
-            // Configure relationships
-            builder.HasMany(ec => ec.Educations)
+            // Configure relationships - update to use EducationalProgram instead of Education
+            builder.HasMany(ec => ec.EducationalPrograms)
                 .WithOne(e => e.EduCategory)
                 .HasForeignKey(e => e.EduCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);

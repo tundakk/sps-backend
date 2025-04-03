@@ -15,8 +15,8 @@ namespace sps.Domain.Model.Entities
         public required string Name { get; set; }
         public required SensitiveString Email { get; set; }
         
-        public Guid? PlacesId { get; set; }
-        public Place? Place { get; set; }
+        public Guid? EducationalProgramId { get; set; }
+        public EducationalProgram? EducationalProgram { get; set; }
         
         public ICollection<SpsaCase> SpsaCases { get; init; }
     }

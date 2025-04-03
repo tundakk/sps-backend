@@ -1,5 +1,6 @@
 namespace sps.BLL.Services.Implementations
 {
+    using Mapster;
     using Microsoft.Extensions.Logging;
     using sps.BLL.Services.Base;
     using sps.BLL.Services.Interfaces;
@@ -26,43 +27,28 @@ namespace sps.BLL.Services.Implementations
                 return ServiceResponse<StudentModel>.CreateNotFound("Student not found");
             }
 
-            var studentModel = new StudentModel
-            {
-                Id = student.Id,
-                StudentNumber = student.StudentNumber,
-                CPRNumber = student.CPRNumber,
-                Name = student.Name,
-                FinishedDate = student.FinishedDate,
-                StartPeriodId = student.StartPeriodId,
-                EducationId = student.EducationId,
-                Comments = student.Comments.Select(c => new CommentModel
-                {
-                    Id = c.Id,
-                    CommentText = c.CommentText,
-                    CreatedAt = c.CreatedAt,
-                    CreatedBy = c.CreatedBy,
-                    EntityType = c.EntityType,
-                    EntityId = c.StudentId ?? c.SpsaCaseId ?? c.TeacherPaymentId ?? c.StudentPaymentId ?? c.OpkvalSupervisionId ?? Guid.Empty
-                }).ToList(),
-                SpsaCases = student.SpsaCases.Select(sc => new SpsaCaseModel
-                {
-                    Id = sc.Id,
-                    SpsaCaseNumber = sc.SpsaCaseNumber,
-                    ApplicationDate = sc.ApplicationDate,
-                    LatestReapplicationDate = sc.LatestReapplicationDate,
-                    StudentId = sc.StudentId,
-                    SupportingTeacherId = sc.SupportingTeacherId,
-                    AppliedPeriodId = sc.AppliedPeriodId,
-                    DiagnosisId = sc.DiagnosisId,
-                    EduCategoryId = sc.EduCategoryId,
-                    SupportTypeId = sc.SupportTypeId,
-                    EduStatusId = sc.EduStatusId,
-                    TeacherPaymentId = sc.TeacherPaymentId,
-                    OpkvalSupervisionId = sc.OpkvalSupervisionId,
-                    StudentPaymentId = sc.StudentPaymentId
-                }).ToList()
-            };
+            // Use Mapster to map the entity to model
+            var studentModel = student.Adapt<StudentModel>();
             return ServiceResponse<StudentModel>.CreateSuccess(studentModel);
+        }
+
+        public override async Task<ServiceResponse<StudentModel>> UpdateAsync(StudentModel model)
+        {
+            var entity = await Repository.GetByIdAsync(model.Id);
+            if (entity == null)
+            {
+                return ServiceResponse<StudentModel>.CreateNotFound("Student not found");
+            }
+
+            // Use Mapster to map properties from model to entity
+            // Excluding properties that shouldn't be overwritten
+            model.Adapt(entity);
+            
+            // Make sure to set the UpdatedAt timestamp
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            var updatedEntity = await Repository.UpdateAsync(entity);
+            return ServiceResponse<StudentModel>.CreateSuccess(updatedEntity.Adapt<StudentModel>());
         }
     }
 }

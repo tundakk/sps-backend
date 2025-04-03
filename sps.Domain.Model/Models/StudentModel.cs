@@ -9,6 +9,8 @@ namespace sps.Domain.Model.Models
         {
             SpsaCases = new HashSet<SpsaCaseModel>();
             Comments = new HashSet<CommentModel>();
+            CreatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
 
         [Key]
@@ -27,13 +29,15 @@ namespace sps.Domain.Model.Models
         [MaxLength(500)]
         public ICollection<CommentModel> Comments { get; init; }
 
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
         public DateTime? FinishedDate { get; set; }
 
         public Guid? StartPeriodId { get; set; }
         public PeriodModel? StartPeriod { get; set; }
 
-        public Guid? EducationId { get; set; }
-        public EducationModel? Education { get; set; }
+        public Guid? EducationalProgramId { get; set; }
+        public EducationalProgramModel? EducationalProgram { get; set; }
 
         public ICollection<SpsaCaseModel> SpsaCases { get; init; }
     }

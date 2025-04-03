@@ -29,6 +29,7 @@ public static class MappingConfig
             .Map(dest => dest.CreatedAt, src => src.CreatedAt)
             .Map(dest => dest.EntityType, src => src.EntityType)
             .Map(dest => dest.CreatedBy, src => src.CreatedBy)
+            .Map(dest => dest.CreatedByUserId, src => src.CreatedByUserId)
             .Map(dest => dest.EntityId, src => GetEntityId(src));
 
         TypeAdapterConfig<CommentModel, Comment>.NewConfig()
@@ -37,6 +38,7 @@ public static class MappingConfig
             .Map(dest => dest.CreatedAt, src => src.CreatedAt)
             .Map(dest => dest.EntityType, src => src.EntityType)
             .Map(dest => dest.CreatedBy, src => src.CreatedBy)
+            .Map(dest => dest.CreatedByUserId, src => src.CreatedByUserId)
             .AfterMapping((src, dest) =>
             {
                 switch (src.EntityType)
@@ -68,7 +70,7 @@ public static class MappingConfig
             .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.FinishedDate, src => src.FinishedDate)
             .Map(dest => dest.StartPeriodId, src => src.StartPeriodId)
-            .Map(dest => dest.EducationId, src => src.EducationId);
+            .Map(dest => dest.EducationalProgramId, src => src.EducationalProgramId);
 
         TypeAdapterConfig<StudentModel, Student>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
@@ -78,7 +80,7 @@ public static class MappingConfig
             .Map(dest => dest.Comments, src => src.Comments)
             .Map(dest => dest.FinishedDate, src => src.FinishedDate)
             .Map(dest => dest.StartPeriodId, src => src.StartPeriodId)
-            .Map(dest => dest.EducationId, src => src.EducationId);
+            .Map(dest => dest.EducationalProgramId, src => src.EducationalProgramId);
 
         // SpsaCase mapping
         TypeAdapterConfig<SpsaCase, SpsaCaseModel>.NewConfig()
@@ -112,13 +114,28 @@ public static class MappingConfig
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Name, src => src.Name)
             .Map(dest => dest.Email, src => src.Email)
-            .Map(dest => dest.PlacesId, src => src.PlacesId);
+            .Map(dest => dest.EducationalProgramId, src => src.EducationalProgramId);
 
         TypeAdapterConfig<SupportingTeacherModel, SupportingTeacher>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Name, src => src.Name)
             .Map(dest => dest.Email, src => src.Email)
-            .Map(dest => dest.PlacesId, src => src.PlacesId);
+            .Map(dest => dest.EducationalProgramId, src => src.EducationalProgramId);
+
+        // EducationalProgram mapping (new)
+        TypeAdapterConfig<EducationalProgram, EducationalProgramModel>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.ProgramCode, src => src.ProgramCode)
+            .Map(dest => dest.Alias, src => src.Alias)
+            .Map(dest => dest.EduCategoryId, src => src.EduCategoryId);
+
+        TypeAdapterConfig<EducationalProgramModel, EducationalProgram>.NewConfig()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.ProgramCode, src => src.ProgramCode)
+            .Map(dest => dest.Alias, src => src.Alias)
+            .Map(dest => dest.EduCategoryId, src => src.EduCategoryId);
 
         // StudentPayment mapping
         TypeAdapterConfig<StudentPayment, StudentPaymentModel>.NewConfig()
@@ -156,19 +173,6 @@ public static class MappingConfig
             .Map(dest => dest.ExternalVoucherNumber, src => src.ExternalVoucherNumber)
             .Map(dest => dest.SupportTypeId, src => src.SupportTypeId);
 
-        // Place mapping
-        TypeAdapterConfig<Place, PlaceModel>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.PlaceNumber, src => src.PlaceNumber)
-            .Map(dest => dest.Alias, src => src.Alias);
-
-        TypeAdapterConfig<PlaceModel, Place>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.PlaceNumber, src => src.PlaceNumber)
-            .Map(dest => dest.Alias, src => src.Alias);
-
         // EduCategory mapping
         TypeAdapterConfig<EduCategory, EduCategoryModel>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
@@ -177,17 +181,6 @@ public static class MappingConfig
         TypeAdapterConfig<EduCategoryModel, EduCategory>.NewConfig()
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Name, src => src.Name);
-
-        // Education mapping
-        TypeAdapterConfig<Education, EducationModel>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.EduCategoryId, src => src.EduCategoryId);
-
-        TypeAdapterConfig<EducationModel, Education>.NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.EduCategoryId, src => src.EduCategoryId);
 
         // Period mapping
         TypeAdapterConfig<Period, PeriodModel>.NewConfig()

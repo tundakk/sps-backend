@@ -102,10 +102,10 @@ namespace sps.BLL
 
             // Register repositories (DAL).
             services.AddScoped<IStudentRepo, StudentRepo>();
-            services.AddScoped<IEducationRepo, EducationRepo>();
+            // Replace Education and Place repos with EducationalProgram repo
+            services.AddScoped<IEducationalProgramRepo, EducationalProgramRepo>();
             services.AddScoped<ISpsaCaseRepo, SpsaCaseRepo>();
             services.AddScoped<IPeriodRepo, PeriodRepo>();
-            services.AddScoped<IPlaceRepo, PlaceRepo>();
             services.AddScoped<IDiagnosisRepo, DiagnosisRepo>();
             services.AddScoped<IEduCategoryRepo, EduCategoryRepo>();
             services.AddScoped<IStudentPaymentRepo, StudentPaymentRepo>();
@@ -118,10 +118,10 @@ namespace sps.BLL
 
             // Register services (BLL).
             services.AddScoped<IStudentService, StudentService>();
-            services.AddScoped<IEducationService, EducationService>();
+            // Replace Education and Place services with EducationalProgram service
+            services.AddScoped<IEducationalProgramService, EducationalProgramService>();
             services.AddScoped<ISpsaCaseService, SpsaCaseService>();
             services.AddScoped<IPeriodService, PeriodService>();
-            services.AddScoped<IPlaceService, PlaceService>();
             services.AddScoped<IDiagnosisService, DiagnosisService>();
             services.AddScoped<IEduCategoryService, EduCategoryService>();
             services.AddScoped<IStudentPaymentService, StudentPaymentService>();
@@ -137,7 +137,10 @@ namespace sps.BLL
             services.AddTransient<ISMSService, SMSService>();
 
             // Register Email Sender Service.
-            services.AddTransient<IEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
+            // services.AddTransient<IEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
+            services.AddScoped<IExtendedEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
+services.AddScoped<IEmailSender<IdentityUser<Guid>>>(sp => 
+    sp.GetRequiredService<IExtendedEmailSender<IdentityUser<Guid>>>());
 
             // Register encryption service.
             services.AddScoped<IEncryptionService, AESEncryptionService>();

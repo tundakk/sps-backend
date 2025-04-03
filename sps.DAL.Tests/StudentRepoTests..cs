@@ -106,7 +106,7 @@ namespace sps.DAL.Tests
             {
                 Id = studentId,
                 StudentNumber = "12345",
-                CPRNumber = new CPRNumber("1234567890"),
+                CPRNumber = new CPRNumber("4444444446"),
                 Name = new SensitiveString("John Doe")
             };
 

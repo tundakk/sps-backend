@@ -16,10 +16,9 @@ namespace sps.DAL.DataModel
         }
 
         public DbSet<Student> Students { get; set; }
-        public DbSet<Education> Educations { get; set; }
+        public DbSet<EducationalProgram> EducationalPrograms { get; set; }
         public DbSet<EduCategory> EduCategories { get; set; }
         public DbSet<Period> Periods { get; set; }
-        public DbSet<Place> Places { get; set; }
         public DbSet<SpsaCase> SpsaCases { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<StudentPayment> StudentPayments { get; set; }
@@ -29,7 +28,6 @@ namespace sps.DAL.DataModel
         public DbSet<EduStatus> EduStatuses { get; set; }
         public DbSet<EducationPeriodRate> EducationPeriodRates { get; set; }
         public DbSet<SupportType> SupportTypes { get; set; }
-
         public DbSet<Diagnosis> Diagnoses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -44,6 +42,5 @@ namespace sps.DAL.DataModel
             // Apply all configurations from assembly
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
-
     }
 }

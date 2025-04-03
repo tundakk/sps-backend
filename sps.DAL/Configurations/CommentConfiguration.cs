@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using sps.DAL.Configurations.Extensions;
 using sps.Domain.Model.Entities;
 using sps.Domain.Model.Services;
 
@@ -16,61 +17,48 @@ namespace sps.DAL.Configurations
 
         public void Configure(EntityTypeBuilder<Comment> builder)
         {
-            builder.HasKey(c => c.Id);
+            builder.HasKey(e => e.Id);
 
-            builder.ComplexProperty(c => c.CommentText, b =>
-            {
-                b.Property(s => s.Value)
-                    .HasColumnName("CommentText")
-                    .HasConversion(
-                        v => _encryptionService.Encrypt(v),
-                        v => _encryptionService.Decrypt(v));
-            });
+            // Apply encryption to CommentText
+            builder.Property(e => e.CommentText)
+                .IsRequired()
+                .UseEncryption(_encryptionService);
 
-            builder.Property(c => c.CreatedAt)
+            builder.Property(e => e.EntityType)
                 .IsRequired();
 
-            builder.Property(c => c.CreatedBy)
-                .IsRequired(false)
-                .HasMaxLength(256);
+            builder.Property(e => e.CreatedAt)
+                .IsRequired();
+            
+            // Optional properties
+            builder.Property(e => e.CreatedBy);
+            builder.Property(e => e.CreatedByUserId);
+            
+            // Relationships
+            builder.HasOne(e => e.SpsaCase)
+                .WithMany(c => c.Comments)
+                .HasForeignKey(e => e.SpsaCaseId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
-            builder.Property(c => c.EntityType)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            // Configure relationships
-            builder.HasOne(c => c.SpsaCase)
+            builder.HasOne(e => e.Student)
                 .WithMany(s => s.Comments)
-                .HasForeignKey(c => c.SpsaCaseId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
-            builder.HasOne(c => c.Student)
-                .WithMany(s => s.Comments)
-                .HasForeignKey(c => c.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(e => e.TeacherPayment)
+                .WithMany(tp => tp.Comments)
+                .HasForeignKey(e => e.TeacherPaymentId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
-            builder.HasOne(c => c.TeacherPayment)
-                .WithMany(s => s.Comments)
-                .HasForeignKey(c => c.TeacherPaymentId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(e => e.StudentPayment)
+                .WithMany(sp => sp.Comments)
+                .HasForeignKey(e => e.StudentPaymentId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
-            builder.HasOne(c => c.StudentPayment)
-                .WithMany(s => s.Comments)
-                .HasForeignKey(c => c.StudentPaymentId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasOne(c => c.OpkvalSupervision)
-                .WithMany(s => s.Comments)
-                .HasForeignKey(c => c.OpkvalSupervisionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Add a check constraint to ensure only one foreign key is set
-            builder.ToTable(tb => tb.HasCheckConstraint("CK_Comment_SingleEntity",
-                "CASE WHEN SpsaCaseId IS NOT NULL THEN 1 ELSE 0 END + " +
-                "CASE WHEN StudentId IS NOT NULL THEN 1 ELSE 0 END + " +
-                "CASE WHEN TeacherPaymentId IS NOT NULL THEN 1 ELSE 0 END + " +
-                "CASE WHEN StudentPaymentId IS NOT NULL THEN 1 ELSE 0 END + " +
-                "CASE WHEN OpkvalSupervisionId IS NOT NULL THEN 1 ELSE 0 END = 1"));
+            builder.HasOne(e => e.OpkvalSupervision)
+                .WithMany(os => os.Comments)
+                .HasForeignKey(e => e.OpkvalSupervisionId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         }
     }
 }

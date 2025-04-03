@@ -11,7 +11,6 @@ builder.Services.AddControllers();
 
 // Add Business Logic Layer services, including DbContext, Identity, JWT Auth, Repositories, and other services.
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
-builder.Services.AddScoped<IEncryptionService, AESEncryptionService>();
 
 // Register Mapster mappings
 MappingConfig.RegisterMappings();
