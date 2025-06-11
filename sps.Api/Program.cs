@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using sps.API;
 using sps.API.Middleware;
+using sps.API.Configuration;
 using sps.BLL;
 using sps.BLL.Services.Implementations;
 using sps.Domain.Model.Services;
@@ -11,6 +12,13 @@ builder.Services.AddControllers();
 
 // Add Business Logic Layer services, including DbContext, Identity, JWT Auth, Repositories, and other services.
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
+
+// Add memory cache for rate limiting
+builder.Services.AddMemoryCache();
+
+// Configure rate limiting
+builder.Services.Configure<RateLimitConfiguration>(
+    builder.Configuration.GetSection(RateLimitConfiguration.SectionName));
 
 // Register Mapster mappings
 MappingConfig.RegisterMappings();
@@ -123,6 +131,18 @@ else
 
 // Register the global exception middleware (should be early in the pipeline)
 app.UseCustomExceptionHandler();
+
+// Add rate limiting middleware (should be early but after exception handling)
+var rateLimitConfig = app.Configuration.GetSection(RateLimitConfiguration.SectionName)
+    .Get<RateLimitConfiguration>();
+
+if (rateLimitConfig != null)
+{
+    foreach (var rule in rateLimitConfig.GetRules())
+    {
+        app.UseRateLimiting(rule);
+    }
+}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
