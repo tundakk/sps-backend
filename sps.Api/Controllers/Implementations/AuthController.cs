@@ -50,9 +50,7 @@ private readonly IExtendedEmailSender<IdentityUser<Guid>> _emailSender;
             _smsService = smsService;
             _cache = cache;
             _emailSender = emailSender; // Add this line
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Endpoint for user login that returns a JWT token
         /// </summary>
         /// <param name="loginDto">The login credentials</param>

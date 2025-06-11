@@ -4,7 +4,7 @@ using sps.Domain.Model.Responses;
 namespace sps.API.Controllers.Base
 {
     /// <summary>
-    /// Base controller for API controllers.
+    /// Base controller for API controllers with built-in rate limiting support.
     /// </summary>
     /// <typeparam name="T">The type of the controller.</typeparam>
     [ApiController]
