@@ -1,5 +1,17 @@
 # SPS Backend
 
+## 🤖 For AI Models Working on This Project
+
+**📖 IMPORTANT**: This project uses documentation as the source of truth. Before making any changes:
+
+- **📚 READ**: [AI Instructions](AI_INSTRUCTIONS.md) - Comprehensive guidelines for maintaining documentation
+- **⚡ QUICK REF**: [AI Quick Reference](AI_QUICK_REFERENCE.md) - Fast lookup for common tasks
+- **📖 DOCS**: [Documentation](docs/README.md) - Complete project documentation
+
+**⚠️ MANDATORY**: Always read relevant documentation before coding and update it when making changes.
+
+---
+
 ## Overview
 SPS Backend is a comprehensive API solution for managing student support applications (SPSA cases) at Københavns Professionshøjskole. This project transforms a previously complex Excel-based process into a modern, scalable web application with robust security and data management capabilities.
 
