@@ -15,7 +15,7 @@ WARNING: This script modifies files in place. Always backup before use!
 
 import os
 import sys
-from typing import Tuple
+from typing import Tuple, Set
 
 
 def replace_in_file(file_path: str, old_str: str = "sps", new_str: str = "sps") -> bool:
@@ -55,7 +55,7 @@ def replace_in_file(file_path: str, old_str: str = "sps", new_str: str = "sps") 
 
 
 def traverse_and_replace(directory: str, old_str: str, new_str: str, 
-                        excluded_dirs: set = None, excluded_extensions: set = None) -> Tuple[int, int]:
+                        excluded_dirs: Set[str] = set(), excluded_extensions: Set[str] = set()) -> Tuple[int, int]:
     """
     Traverses directory tree and replaces text in all applicable files.
     
@@ -69,12 +69,6 @@ def traverse_and_replace(directory: str, old_str: str, new_str: str,
     Returns:
         Tuple of (files_processed, files_modified)
     """
-    if excluded_dirs is None:
-        excluded_dirs = {'bin', 'obj', 'node_modules', '.git', '.vs', '.vscode'}
-    
-    if excluded_extensions is None:
-        excluded_extensions = {'.dll', '.exe', '.pdb', '.cache', '.png', '.jpg', '.gif', '.ico'}
-    
     files_processed = 0
     files_modified = 0
     
