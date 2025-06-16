@@ -10,20 +10,14 @@ namespace sps.DAL.Repos.Base
         protected BaseRepo(SpsDbContext context)
         {
             _context = context;
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Gets an entity by its ID.
         /// </summary>
         /// <param name="id">The ID of the entity to retrieve.</param>
-        /// <returns>Returns the entity that matches the ID.</returns>
-        public virtual async Task<T> GetByIdAsync(Guid id)
+        /// <returns>Returns the entity that matches the ID, or null if not found.</returns>
+        public virtual async Task<T?> GetByIdAsync(Guid id)
         {
             var entity = await _context.Set<T>().FindAsync(id);
-            if (entity == null)
-            {
-                throw new ArgumentException($"Entity of type {typeof(T).Name} with ID {id} was not found.");
-            }
             return entity;
         }
 

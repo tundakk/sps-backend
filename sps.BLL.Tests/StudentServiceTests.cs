@@ -110,9 +110,7 @@ namespace sps.BLL.Tests
             // Assert
             Assert.That(result.Data, Is.Not.Null);
             Assert.That(result.Data.Id, Is.EqualTo(studentModel.Id));
-        }
-
-        [Test]
+        }        [Test]
         public async Task UpdateAsync_ShouldUpdateStudent()
         {
             // Arrange
@@ -130,6 +128,9 @@ namespace sps.BLL.Tests
                 CPRNumber = studentModel.CPRNumber,
                 Name = studentModel.Name
             };
+            
+            // Mock both GetByIdAsync (for the update check) and UpdateAsync
+            _studentRepoMock.Setup(repo => repo.GetByIdAsync(studentModel.Id)).ReturnsAsync(student);
             _studentRepoMock.Setup(repo => repo.UpdateAsync(It.IsAny<Student>())).ReturnsAsync(student);
 
             // Act

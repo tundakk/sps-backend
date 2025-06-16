@@ -16,14 +16,19 @@ namespace sps.DAL.Tests
     {
         private StudentRepo _studentRepo;
         private SpsDbContext _dataContext;
-        private Mock<IEncryptionService> _encryptionServiceMock;
-
-        [SetUp]
+        private Mock<IEncryptionService> _encryptionServiceMock;        [SetUp]
         public void Setup()
         {
             _encryptionServiceMock = new Mock<IEncryptionService>();
+            
+            // Setup encryption service mock to return the input unchanged for testing
+            _encryptionServiceMock.Setup(x => x.Encrypt(It.IsAny<string>()))
+                .Returns((string input) => input);
+            _encryptionServiceMock.Setup(x => x.Decrypt(It.IsAny<string>()))
+                .Returns((string input) => input);
+            
             var options = new DbContextOptionsBuilder<SpsDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDatabase")
+                .UseInMemoryDatabase(databaseName: $"TestDatabase_{Guid.NewGuid()}")
                 .Options;
 
             _dataContext = new SpsDbContext(options, _encryptionServiceMock.Object);

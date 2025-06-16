@@ -91,9 +91,19 @@ The API is designed to work with a modern frontend application:
 - CORS configured for cross-domain requests
 - JWT token handling with cookie support
 
+## Development Tools
+The project includes development utilities in the `dev/` folder:
+
+- **Python Scripts**: Code generation utilities for controllers, services, and repositories
+- **Utilities**: Text replacement and refactoring tools
+- **Documentation**: Usage guides and safety instructions
+
+See [`dev/README.md`](dev/README.md) for detailed information about available development tools.
+
 ## Development Guidelines
 - Follow existing code style and patterns
 - Use dependency injection for all services
 - Write unit tests for new functionality
 - Use DTOs for all API communication
 - Document new endpoints in Swagger
+- Use development tools in `dev/` folder for code generation when needed

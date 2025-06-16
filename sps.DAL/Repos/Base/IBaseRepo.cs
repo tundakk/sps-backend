@@ -36,13 +36,11 @@
         /// <summary>
         /// saves changes to repository.
         /// </summary>
-        Task SaveAsync();
-
-        /// <summary>
+        Task SaveAsync();        /// <summary>
         /// Gets an entity by its ID.
         /// </summary>
         /// <param name="id">The ID of the entity to retrieve.</param>
-        /// <returns>Returns the entity that matches the ID.</returns>
-        Task<T> GetByIdAsync(Guid id);
+        /// <returns>Returns the entity that matches the ID, or null if not found.</returns>
+        Task<T?> GetByIdAsync(Guid id);
     }
 }
