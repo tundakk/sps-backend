@@ -25,6 +25,7 @@
 
 ### 💻 **Development**
 - [**Development Guide**](./development/README.md) - Setup, workflow, testing, and coding standards
+- [**Tools & Monitoring**](./development/tools-and-monitoring.md) - Performance monitoring and diagnostic tools
 
 ### ⚡ **Features**
 - [**Features Overview**](./features/README.md) - Complete feature documentation including core functionality, security, and communication

@@ -173,3 +173,7 @@ dotnet ef migrations remove --project sps.DAL --startup-project sps.API
 3. Reference related issues/tickets
 4. Ensure CI/CD checks pass
 5. Address review feedback promptly
+
+## Additional Resources
+
+- [Tools & Monitoring](./tools-and-monitoring.md) - Performance monitoring and diagnostic tools

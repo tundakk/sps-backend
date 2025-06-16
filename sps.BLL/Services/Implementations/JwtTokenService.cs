@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using sps.BLL.Services.Interfaces;
+using sps.Domain.Model.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -30,17 +31,16 @@ namespace sps.BLL.Services.Implementations
         /// <param name="user">The user entity</param>
         /// <param name="roles">The roles assigned to the user</param>
         /// <returns>JWT token as string</returns>
-        public string GenerateJwtToken<TUser>(TUser user, IEnumerable<string> roles) 
+        public string GenerateJwtToken<TUser>(TUser user, IEnumerable<string> roles)
             where TUser : IdentityUser<Guid>
         {
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
-
             // Add roles as claims
             foreach (var role in roles)
             {

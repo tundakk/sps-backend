@@ -11,6 +11,10 @@ namespace sps.API.Controllers.Implementations
     [Route("api/[controller]")]
     public class RateLimitBasicController : BaseController<RateLimitBasicController>
     {
+        /// <summary>
+        /// Initializes a new instance of the RateLimitBasicController class.
+        /// </summary>
+        /// <param name="logger">The logger instance</param>
         public RateLimitBasicController(ILogger<RateLimitBasicController> logger) : base(logger)
         {
         }
@@ -24,18 +28,19 @@ namespace sps.API.Controllers.Implementations
         public IActionResult Test()
         {
             Logger.LogInformation("Basic rate limit test endpoint accessed at {Time}", DateTime.UtcNow);
-            
+
             var response = ServiceResponse<object>.CreateSuccess(
-                new { 
+                new
+                {
                     message = "Middleware rate limiting is working!",
                     timestamp = DateTime.UtcNow,
-                    rateLimitingInfo = new {
+                    rateLimitingInfo = new
+                    {
                         appliedBy = "Rate Limiting Middleware",
                         generalLimit = "500 requests per minute",
                         checkHeaders = "Look for X-RateLimit-* headers in response"
                     }
-                },
-                "Request processed successfully with middleware rate limiting");
+                });
 
             return Ok(response);
         }
@@ -48,25 +53,27 @@ namespace sps.API.Controllers.Implementations
         public IActionResult GetInfo()
         {
             var rateLimitHeaders = new Dictionary<string, string>();
-            
+
             // Note: Headers are added by middleware after this action completes
             var response = ServiceResponse<object>.CreateSuccess(
-                new { 
+                new
+                {
                     message = "Rate limiting middleware information",
                     activeMiddleware = "RateLimitingMiddleware",
-                    configuration = new {
+                    configuration = new
+                    {
                         generalApiLimit = "500 requests per minute",
                         authEndpointsLimit = "50 requests per 5 minutes",
                         slidingWindow = "Yes - timestamps expire automatically"
                     },
-                    instructions = new {
+                    instructions = new
+                    {
                         checkHeaders = "Response includes X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Window",
                         testRateLimit = "Make multiple rapid requests to see remaining count decrease",
                         exceeedLimit = "After limit is reached, you'll get 429 Too Many Requests"
                     },
                     timestamp = DateTime.UtcNow
-                },
-                "Rate limiting information retrieved");
+                });
 
             return Ok(response);
         }
@@ -80,22 +87,25 @@ namespace sps.API.Controllers.Implementations
         public IActionResult Submit([FromBody] TestData? data)
         {
             Logger.LogInformation("POST endpoint accessed with data: {Data}", data?.Message ?? "null");
-            
             var response = ServiceResponse<object>.CreateSuccess(
-                new { 
-                    message = "POST request processed with rate limiting",
-                    receivedData = data?.Message ?? "No data provided",
-                    rateLimiting = "Applied by middleware to all HTTP methods",
-                    timestamp = DateTime.UtcNow
-                },
-                "POST request completed successfully");
+              new
+              {
+                  message = "POST request processed with rate limiting",
+                  receivedData = data?.Message ?? "No data provided",
+                  rateLimiting = "Applied by middleware to all HTTP methods",
+                  timestamp = DateTime.UtcNow
+              });
 
             return Ok(response);
         }
-    }
-
+    }    /// <summary>
+         /// Test data model for basic rate limiting endpoints
+         /// </summary>
     public class TestData
     {
+        /// <summary>
+        /// Gets or sets the message
+        /// </summary>
         public string? Message { get; set; }
     }
 }

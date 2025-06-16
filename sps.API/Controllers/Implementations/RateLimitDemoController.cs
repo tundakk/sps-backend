@@ -13,6 +13,10 @@ namespace sps.API.Controllers.Implementations
     [RateLimit(50, 1)] // Controller-level: 50 requests per minute
     public class RateLimitDemoController : BaseController<RateLimitDemoController>
     {
+        /// <summary>
+        /// Initializes a new instance of the RateLimitDemoController class.
+        /// </summary>
+        /// <param name="logger">The logger instance</param>
         public RateLimitDemoController(ILogger<RateLimitDemoController> logger) : base(logger)
         {
         }
@@ -26,10 +30,8 @@ namespace sps.API.Controllers.Implementations
         public IActionResult StandardEndpoint()
         {
             Logger.LogInformation("Standard endpoint accessed at {Time}", DateTime.UtcNow);
-            
             var response = ServiceResponse<object>.CreateSuccess(
-                new { message = "Standard endpoint - 50 requests per minute", timestamp = DateTime.UtcNow },
-                "Request processed successfully");
+              new { message = "Standard endpoint - 50 requests per minute", timestamp = DateTime.UtcNow });
 
             return Ok(response);
         }
@@ -44,10 +46,8 @@ namespace sps.API.Controllers.Implementations
         public IActionResult HighFrequencyEndpoint()
         {
             Logger.LogInformation("High-frequency endpoint accessed at {Time}", DateTime.UtcNow);
-            
             var response = ServiceResponse<object>.CreateSuccess(
-                new { message = "High-frequency endpoint - 200 requests per minute", timestamp = DateTime.UtcNow },
-                "Request processed successfully");
+              new { message = "High-frequency endpoint - 200 requests per minute", timestamp = DateTime.UtcNow });
 
             return Ok(response);
         }
@@ -61,16 +61,16 @@ namespace sps.API.Controllers.Implementations
         [RateLimit(5, 5)] // Override: 5 requests per 5 minutes
         public IActionResult SensitiveEndpoint([FromBody] SensitiveRequest request)
         {
-            Logger.LogWarning("Sensitive endpoint accessed at {Time} with data: {Data}", 
+            Logger.LogWarning("Sensitive endpoint accessed at {Time} with data: {Data}",
                 DateTime.UtcNow, request?.Data ?? "null");
-            
+
             var response = ServiceResponse<object>.CreateSuccess(
-                new { 
-                    message = "Sensitive endpoint - 5 requests per 5 minutes", 
+                new
+                {
+                    message = "Sensitive endpoint - 5 requests per 5 minutes",
                     timestamp = DateTime.UtcNow,
                     processedData = request?.Data ?? "No data provided"
-                },
-                "Sensitive operation completed");
+                });
 
             return Ok(response);
         }
@@ -84,20 +84,19 @@ namespace sps.API.Controllers.Implementations
         [RateLimit(10, 60)] // Override: 10 requests per hour
         public async Task<IActionResult> BulkOperationEndpoint([FromBody] BulkRequest request)
         {
-            Logger.LogInformation("Bulk operation started at {Time} for {Count} items", 
+            Logger.LogInformation("Bulk operation started at {Time} for {Count} items",
                 DateTime.UtcNow, request?.Items?.Count ?? 0);
 
             // Simulate processing time
             await Task.Delay(1000);
-            
             var response = ServiceResponse<object>.CreateSuccess(
-                new { 
-                    message = "Bulk operation endpoint - 10 requests per hour",
-                    timestamp = DateTime.UtcNow,
-                    itemsProcessed = request?.Items?.Count ?? 0,
-                    processingTimeMs = 1000
-                },
-                "Bulk operation completed successfully");
+              new
+              {
+                  message = "Bulk operation endpoint - 10 requests per hour",
+                  timestamp = DateTime.UtcNow,
+                  itemsProcessed = request?.Items?.Count ?? 0,
+                  processingTimeMs = 1000
+              });
 
             return Ok(response);
         }
@@ -111,15 +110,16 @@ namespace sps.API.Controllers.Implementations
         public IActionResult GetStatus()
         {
             var response = ServiceResponse<object>.CreateSuccess(
-                new { 
+                new
+                {
                     status = "healthy",
                     timestamp = DateTime.UtcNow,
-                    rateLimitInfo = new {
+                    rateLimitInfo = new
+                    {
                         controllerDefault = "50 requests per minute",
                         middleware = "Also active for general API protection"
                     }
-                },
-                "Status retrieved successfully");
+                });
 
             return Ok(response);
         }
@@ -139,17 +139,15 @@ namespace sps.API.Controllers.Implementations
                 new { endpoint = "POST /bulk-operation", limit = "10 requests per hour (override)" },
                 new { endpoint = "GET /status", limit = "50 requests per minute (controller default)" },
                 new { endpoint = "GET /rate-limit-info", limit = "50 requests per minute (controller default)" }
-            };
-
-            var response = ServiceResponse<object>.CreateSuccess(
-                new { 
+            }; var response = ServiceResponse<object>.CreateSuccess(
+                new
+                {
                     controllerName = "RateLimitDemoController",
                     defaultRateLimit = "50 requests per minute",
                     endpoints = endpoints,
                     middleware = "Rate limiting middleware also active for general API protection",
                     timestamp = DateTime.UtcNow
-                },
-                "Rate limit information retrieved");
+                });
 
             return Ok(response);
         }
@@ -157,20 +155,44 @@ namespace sps.API.Controllers.Implementations
 
     #region Request Models
 
+    /// <summary>
+    /// Request model for sensitive operations
+    /// </summary>
     public class SensitiveRequest
     {
+        /// <summary>
+        /// Gets or sets the sensitive data
+        /// </summary>
         public string? Data { get; set; }
     }
 
+    /// <summary>
+    /// Request model for bulk operations
+    /// </summary>
     public class BulkRequest
     {
+        /// <summary>
+        /// Gets or sets the list of items to process
+        /// </summary>
         public List<BulkItem>? Items { get; set; }
     }
 
+    /// <summary>
+    /// Individual item in a bulk request
+    /// </summary>
     public class BulkItem
     {
+        /// <summary>
+        /// Gets or sets the item identifier
+        /// </summary>
         public string? Id { get; set; }
+        /// <summary>
+        /// Gets or sets the item name
+        /// </summary>
         public string? Name { get; set; }
+        /// <summary>
+        /// Gets or sets the item data
+        /// </summary>
         public string? Data { get; set; }
     }
 

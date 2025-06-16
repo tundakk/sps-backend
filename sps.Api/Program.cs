@@ -5,6 +5,8 @@ using sps.API.Configuration;
 using sps.BLL;
 using sps.BLL.Services.Implementations;
 using sps.Domain.Model.Services;
+using StackExchange.Profiling;
+using StackExchange.Profiling.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,12 +25,54 @@ builder.Services.Configure<RateLimitConfiguration>(
 // Register Mapster mappings
 MappingConfig.RegisterMappings();
 
-// LOGGING
-//builder.Logging.ClearProviders();
-//builder.Logging.AddConsole();
+// Add MiniProfiler for database performance monitoring
+var dbMonitoringConfig = builder.Configuration.GetSection("DatabaseMonitoring");
+var isMonitoringEnabled = dbMonitoringConfig.GetValue<bool>("Enabled", false);
 
-//builder.Logging.SetMinimumLevel(LogLevel.Error);
-//builder.WebHost.CaptureStartupErrors(true).UseSetting("detailedErrors", "true");
+if (isMonitoringEnabled)
+{
+    builder.Services.AddMiniProfiler(options =>
+    {
+        // Set the route base path for the UI
+        options.RouteBasePath = "/profiler";
+        // Set storage to memory cache with retention period
+        var retentionDays = dbMonitoringConfig.GetValue<int>("RetentionDays", 7);
+        options.Storage = new MemoryCacheStorage(new Microsoft.Extensions.Caching.Memory.MemoryCache(
+            new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
+            TimeSpan.FromDays(retentionDays));
+
+        // Configure access control
+        var requireAuth = dbMonitoringConfig.GetValue<bool>("ResultsAuthorized", true);
+        if (requireAuth)
+        {
+            // Only allow access to profiler results in development or for admin users
+            options.ResultsAuthorize = request =>
+                builder.Environment.IsDevelopment() ||
+                request.HttpContext.User.IsInRole("Admin");
+
+            options.ResultsListAuthorize = request =>
+                builder.Environment.IsDevelopment() ||
+                request.HttpContext.User.IsInRole("Admin");
+        }
+        else
+        {
+            // Allow all access in development environments
+            options.ResultsAuthorize = _ => builder.Environment.IsDevelopment();
+            options.ResultsListAuthorize = _ => builder.Environment.IsDevelopment();
+        }
+
+        // Configure EF Core integration
+        options.EnableServerTimingHeader = true;
+        options.TrackConnectionOpenClose = dbMonitoringConfig.GetValue<bool>("TrackConnectionOpenClose", true);
+        options.SqlFormatter = new StackExchange.Profiling.SqlFormatters.SqlServerFormatter();
+
+        // Ignore paths that don't need profiling
+        options.IgnoredPaths.Add("/css");
+        options.IgnoredPaths.Add("/js");
+        options.IgnoredPaths.Add("/lib");
+        options.IgnoredPaths.Add("/favicon.ico");
+    }).AddEntityFramework();
+}
 
 // Configure Swagger
 builder.Services.AddSwaggerGen(c =>
@@ -129,6 +173,12 @@ else
     app.UseHsts();
 }
 
+// Add MiniProfiler middleware (should be early in the pipeline)
+if (isMonitoringEnabled)
+{
+    app.UseMiniProfiler();
+}
+
 // Register the global exception middleware (should be early in the pipeline)
 app.UseCustomExceptionHandler();
 
@@ -154,9 +204,6 @@ app.UseCors("NextAuthPolicy");
 
 // Use cookie policy
 app.UseCookiePolicy();
-
-// Use our custom JWT middleware (before standard auth middlewares)
-//app.UseJwtMiddleware();
 
 app.UseAuthentication();
 app.UseAuthorization();

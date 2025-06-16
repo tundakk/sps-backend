@@ -10,6 +10,7 @@ using sps.BLL.Services.Interfaces;
 using sps.BLL.SMS;
 using sps.Domain.Model.Dtos;
 using sps.Domain.Model.Responses;
+using sps.Domain.Model.Services;
 using System.Security.Claims;
 
 namespace sps.API.Controllers.Implementations
@@ -28,7 +29,7 @@ namespace sps.API.Controllers.Implementations
         private readonly ISMSService _smsService;
         private readonly IMemoryCache _cache;
         // private readonly IEmailSender<IdentityUser<Guid>> _emailSender; // Add this line
-private readonly IExtendedEmailSender<IdentityUser<Guid>> _emailSender;
+        private readonly IExtendedEmailSender<IdentityUser<Guid>> _emailSender;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthController"/> class.
@@ -51,10 +52,10 @@ private readonly IExtendedEmailSender<IdentityUser<Guid>> _emailSender;
             _cache = cache;
             _emailSender = emailSender; // Add this line
         }        /// <summary>
-        /// Endpoint for user login that returns a JWT token
-        /// </summary>
-        /// <param name="loginDto">The login credentials</param>
-        /// <returns>JWT token and user information</returns>
+                 /// Endpoint for user login that returns a JWT token
+                 /// </summary>
+                 /// <param name="loginDto">The login credentials</param>
+                 /// <returns>JWT token and user information</returns>
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
@@ -141,7 +142,8 @@ private readonly IExtendedEmailSender<IdentityUser<Guid>> _emailSender;
                     // Send verification email
                     await _emailSender.SendConfirmationCodeAsync(user, user.Email ?? registerDto.Email, code);
 
-                    return Ok(ServiceResponse<object>.CreateSuccess(new { 
+                    return Ok(ServiceResponse<object>.CreateSuccess(new
+                    {
                         message = "Registration successful. Please check your email to verify your account.",
                         requiresEmailVerification = true,
                         email = user.Email
@@ -484,8 +486,9 @@ private readonly IExtendedEmailSender<IdentityUser<Guid>> _emailSender;
                 // Send verification email
                 await _emailSender.SendConfirmationCodeAsync(user, user.Email ?? resendEmailDto.Email, code);
 
-                return Ok(ServiceResponse<object>.CreateSuccess(new { 
-                    message = "Verification code has been sent to your email" 
+                return Ok(ServiceResponse<object>.CreateSuccess(new
+                {
+                    message = "Verification code has been sent to your email"
                 }));
             }
             catch (Exception ex)
