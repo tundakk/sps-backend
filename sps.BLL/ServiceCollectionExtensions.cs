@@ -139,8 +139,8 @@ namespace sps.BLL
             // Register Email Sender Service.
             // services.AddTransient<IEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
             services.AddScoped<IExtendedEmailSender<IdentityUser<Guid>>, BrevoEmailSender>();
-services.AddScoped<IEmailSender<IdentityUser<Guid>>>(sp => 
-    sp.GetRequiredService<IExtendedEmailSender<IdentityUser<Guid>>>());
+            services.AddScoped<IEmailSender<IdentityUser<Guid>>>(sp =>
+                sp.GetRequiredService<IExtendedEmailSender<IdentityUser<Guid>>>());
 
             // Register encryption service.
             services.AddScoped<IEncryptionService, AESEncryptionService>();
@@ -149,17 +149,7 @@ services.AddScoped<IEmailSender<IdentityUser<Guid>>>(sp =>
             services.AddScoped<ICommentService, CommentService>();
 
             // Add memory caching
-            services.AddMemoryCache();
-
-            return services;
+            services.AddMemoryCache();            return services;
         }
-    }
-
-    public class JwtSettings
-    {
-        public string Secret { get; set; } = string.Empty;
-        public string Issuer { get; set; } = string.Empty;
-        public string Audience { get; set; } = string.Empty;
-        public int ExpirationInMinutes { get; set; } = 60;
     }
 }
